@@ -1,9 +1,4 @@
 .data
-
-	;; Errors
-	FileNotFound: .asciiz "Could not open file"
-	FileNotRead: .asciiz "Could not read from file"
-
 	;; Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	;; instrument, and one byte for volume
 	Channels: .space 32 ; 2 bytes * 16 channels
@@ -25,6 +20,7 @@ main:
 	; read from file, file descriptor goes into $v0
 	jal open_file
 
+
 	; if file descriptor less than 0, error
 	lw $a0  FileNotFound
 	blt $a0 $zero exit_with_error
@@ -40,10 +36,13 @@ main:
 	syscall
 
 
+	jal parse_header
+
 li $v0 10
 syscall
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 	;; Open a file for reading, file descriptor will go into $v0
 open_file:
@@ -55,13 +54,17 @@ open_file:
 
 	j $ra
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	;; Exit and print out an error
-	;;
-	;; $a0: address of null terminated string to exit with
-exit_with_error: 
 
 
-	li $v0 10
-	syscall
+	;; Parses the header chunk of the file. This assumes the header chunk has
+	;; been filled with meaningful data by reading from a midi file
+parse_header:
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
