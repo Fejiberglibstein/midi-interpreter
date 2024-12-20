@@ -1,7 +1,7 @@
 .data
 	## Name of the midi file to read from. In the future this should be changed
 	## to read from user input for file.
-	FileName: .asciiz "../examples/test.mi"
+	FileName: .asciiz "../examples/test.mid"
 
 	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	## instrument, and one byte for volume
@@ -27,7 +27,7 @@ main:
 
 	# if file descriptor less than 0, error
 	la $a0  FileNotFound
-	blt $a0 $zero exit_with_error
+	blt $v0 $zero exit_with_error
 
 	move $s7  $v0 # move file descriptor into s0
 
