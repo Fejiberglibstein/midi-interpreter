@@ -1,5 +1,3 @@
-
-
 	;; Decodes some byte sequence into a number based on
 	;; http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html#BM1_
 	;; 
@@ -28,3 +26,12 @@ _loop:
 
 	j $ra
 
+
+	;; Get the length of a chunk from the header
+	;;
+	;; $a0: address of the starting byte of the chunk
+	;; $v0: length of the chunk
+read_chunk: 
+	; Skip over the 4 bytes for the chunk type and read the 32 bit length of the
+	; chunk
+	lw $v0 4($a0) 
