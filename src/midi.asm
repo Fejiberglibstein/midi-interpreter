@@ -22,14 +22,11 @@ parse_midi_file:
 	li $a2 0x0      # mode, 0 for read
 	li $v0 13       # 13 is for opening files
 	syscall
-
+	move $s7 $v0 # move file descriptor into s7
 
 	# if file descriptor less than 0, error
 	la $a0 FileNotFound
 	blt $v0 $zero exit_with_error
-
-	move $s7  $v0 # move file descriptor into s7
-
 
 	# Read from the file descriptor
 	move $a0 $s7       # file descriptor
@@ -67,7 +64,7 @@ validate_header:
 	addi $sp $sp -4
 	sw $s0 0($sp)
 
-	move $s0 $a0
+	move $s0 $a0 # s0 = address of header
 
 	# Make sure first four bytes are MThd
 	lw $t0 0($s0)     # Get the 4 byte header from the chunk
@@ -75,7 +72,6 @@ validate_header:
 	# if t0 and t1 arent equal, error
 	la $a0 NoHeader
 	bne $t0 $t1 exit_with_error
-
 
 	# Make sure the format of the chunk is 1
 	lh $t0 8($s0) # Get the format from the chunk, we skipped type and length
@@ -136,7 +132,10 @@ allocate_tracks:
 	# Allocate space on the stack, this is where we will put the chunk type and
 	# length of each chunk.
 	addi $sp $sp -8
-_loop:
+
+	# for (int i = 0;i < ntrks;i++) (i only increments on a track chunk though)
+	li $t7 0 # This will be our `i` in the loop, 
+_loop: 
 
 	# Read from the file descriptor to get the next chunk's header
 	move $a0 $s1 # file descriptor
@@ -144,7 +143,6 @@ _loop:
 	li $a2 8     # maximum number of characters to read
 	li $v0 14    # 14 is for reading files
 	syscall
-
 
 	lw $t2 4($sp) # Get the length of the chunk into t2
 	# Make sure first four bytes are MTrk
@@ -157,10 +155,30 @@ _loop:
 	move $a0 $t2 # the number of bytes to allocate
 	li $v0 9     # 9 is for sbrk
 	syscall
+	# Store the pointer we just allocated into the array of pointers we have
+	add $t0 $s2 $t7 # Shift the base address of array by i
+	sw $v0 0($t0) 
 
+	# Read from the file descriptor to get the chunks data
+	move $a0 $s1 # file descriptor
+	move $a1 $v0 # buffer location
+	li $a2 $t2   # maximum number of characters to read
+	li $v0 14    # 14 is for reading files
+	syscall
 
-_loop_done:
+	addi $t7 $t7 1 # i ++
+	bne $t7 $s0 _loop # if i != ntrks, continue
 
+	# loop is over
+	addi $sp $sp 8 # Deallocate the space we had from storing chunk header
+
+	# Allocate space on the stack
+	lw $s0 0($sp)
+	lw $s1 4($sp)
+	lw $s2 8($sp)
+	addi $sp $sp 12
+
+	ja $ra
 
 	# Read the memory into null and then continue on the loop. This is only
 	# called when a chunk is _not_ a track.
@@ -176,8 +194,7 @@ _not_track:
 	li $v0 14      # 14 is for reading files
 	syscall
 
-
-
+	j _loop
 
 
 _error:
