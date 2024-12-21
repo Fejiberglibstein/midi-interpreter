@@ -9,7 +9,6 @@
 	## instrument, and one byte for volume
 	Channels: .space 32 # 2 bytes * 16 channels
 
-
 .text
 .globl parse_midi_file
 parse_midi_file:
@@ -17,8 +16,12 @@ parse_midi_file:
 	addi $sp -4
 	sw $ra 0($sp)
 
-	# read from file, file descriptor goes into $v0
-	jal open_file
+	# Open a file for reading, file descriptor will go into $v0
+	la $a0  FileName # filename
+	li $a1  0x0      # flags
+	li $a2  0x0      # mode, 0 for read
+	li $v0  13       # 13 is for opening files
+	syscall
 
 
 	# if file descriptor less than 0, error
@@ -44,20 +47,6 @@ parse_midi_file:
 	lw $ra 0($sp)
 	addi $sp 4
 	jr $ra
-
-################################################################################
-
-
-	## Open a file for reading, file descriptor will go into $v0
-open_file:
-	la $a0  FileName # filename
-	li $a1  0x0      # flags
-	li $a2  0x0      # mode, 0 for read
-	li $v0  13       # 13 is for opening files
-	syscall
-
-	jr $ra
-
 
 ################################################################################
 
@@ -116,5 +105,3 @@ parse_header:
 
 
 ################################################################################
-
-
