@@ -13,7 +13,7 @@
 .globl parse_midi_file
 parse_midi_file:
 	# Make room on the stack for the return address
-	addi $sp -4
+	addi $sp $sp -4
 	sw $ra 0($sp)
 
 	# Open a file for reading, file descriptor will go into $v0
@@ -28,7 +28,7 @@ parse_midi_file:
 	la $a0  FileNotFound
 	blt $v0 $zero exit_with_error
 
-	move $s7  $v0 # move file descriptor into s0
+	move $s7  $v0 # move file descriptor into s7
 
 
 	# Read from the file descriptor

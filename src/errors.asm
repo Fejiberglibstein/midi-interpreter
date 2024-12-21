@@ -7,7 +7,7 @@
 	.globl NoHeader
 	NoHeader: .asciiz "There was no header chunk found"
 	.globl WrongFormat
-	WrongFormat: .aciiz "Only multitrack files are supported (format type 1)"
+	WrongFormat: .asciiz "Only multitrack files are supported (format type 1)"
 
 	## Exit and print out an error
 	##

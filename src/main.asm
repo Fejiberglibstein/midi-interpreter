@@ -1,6 +1,7 @@
 .data
 	## Name of the midi file to read from. In the future this should be changed
 	## to read from user input for file.
+	.globl FileName
 	FileName: .asciiz "../examples/test.mid"
 
 .text
