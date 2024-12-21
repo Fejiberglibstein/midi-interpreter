@@ -6,6 +6,8 @@
 	FileNotRead: .asciiz "Could not read from file"
 	.globl NoHeader
 	NoHeader: .asciiz "There was no header chunk found"
+	.globl WrongFormat
+	WrongFormat: .aciiz "Only multitrack files are supported (format type 1)"
 
 	## Exit and print out an error
 	##

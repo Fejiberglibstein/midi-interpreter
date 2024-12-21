@@ -16,6 +16,19 @@
 .text
 .globl main
 main:
+	jal read_file
+	li $v0 10
+	syscall
+
+
+################################################################################
+
+.globl read_file
+read_file:
+	# Make room on the stack for the return address
+	addi $sp -4
+	sw $ra 0($sp)
+
 	# read from file, file descriptor goes into $v0
 	jal open_file
 
@@ -38,9 +51,11 @@ main:
 	jal parse_header
 
 
-	li $v0 10
-	syscall
 
+	# Pop the return address off the stack
+	lw $ra 0($sp)
+	addi $sp 4
+	jr $ra
 
 ################################################################################
 
@@ -59,10 +74,55 @@ open_file:
 ################################################################################
 
 
-
 	## Parses the header chunk of the file. This assumes the header chunk has
 	## been filled with meaningful data by reading from a midi file
+	##
+	## The only supported files (at the moment) are type one. Any other file
+	## type will result in an error.
+	##
+	## $a0: address of the start of the header (should be first byte in the
+	##      file)
+	## $v0: pointer to a region of memory allocated for placing all the
+	## addresses of tracks in; `Track *[]`
 parse_header:
+	# Make room on the stack for s0
+	addi $sp -4
+	sw $s0 0($sp)
+
+	move $s0 $a0
+
+	# Make sure first four bytes are MThd
+	lw $t0 0($s0)     # Get the 4 byte header from the chunk, this should be `MThd`
+	li $t1 0X4D546864 # Load `MThd` into t1
+	# if t0 and t1 arent equal, error
+	la $a0 NoHeader
+	bne $t0 $t1 exit_with_error
+
+
+	# Make sure the format of the chunk is 1
+	lh $t0 8($s0) # Get the format from the chunk, we skipped type and length
+	li $t1 1      # Format should be 1
+	# if t0 and t1 arent equal, error
+	la $a0 WrongFormat
+	bne $t0 $t1 exit_with_error
+
+	# Get the `ntrks` part of the header, this is the amount of tracks inside
+	# the file
+	lh $t0 10($s1) # Get the ntrks from the chunks
+
+	# Allocate room on the heap for an array of pointers, the amount of pointers
+	# is given by our `$t0` value.
+	#
+	# We have `$t0` amount of tracks, each pointer is 4 bytes, so we need to
+	# multiply by 4 and then call sbrk to allocate system memory
+	sll $a0 $t0 2  # a0: number of bytes to allocate (4 * t0)
+	li $v0 9 # 9 is syscall for sbrk
+	syscall
+	# here, v0 is the pointer to the region of memory we allocated, like malloc
+
+	# Reset stack pointer
+	lw $s0 0($sp)
+	addi $sp 4
 
 	jr $ra
 
