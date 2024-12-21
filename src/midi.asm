@@ -3,10 +3,12 @@
 	## bytes for chunk length, and 6 bytes for the header's content.
 	##
 	## All midi header chunks are _always_ 6 bytes
+	.align 4
 	HeaderChunk: .space 14
 
 	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	## instrument, and one byte for volume
+	.align 4
 	Channels: .space 32 # 2 bytes * 16 channels
 
 .text
@@ -36,6 +38,7 @@ parse_midi_file:
 	syscall
 
 	# Parse the header
+	la $a0 HeaderChunk # Address of the memory spot
 	jal validate_header
 	move $a0 $v0 # Put the number of tracks returned into a0
 	move $a1 $s7 # Put the file descriptor into a1
@@ -162,7 +165,7 @@ _loop:
 	# Read from the file descriptor to get the chunks data
 	move $a0 $s1 # file descriptor
 	move $a1 $v0 # buffer location
-	li $a2 $t2   # maximum number of characters to read
+	move $a2 $t2 # maximum number of characters to read
 	li $v0 14    # 14 is for reading files
 	syscall
 
@@ -178,7 +181,7 @@ _loop:
 	lw $s2 8($sp)
 	addi $sp $sp 12
 
-	ja $ra
+	jr $ra
 
 	# Read the memory into null and then continue on the loop. This is only
 	# called when a chunk is _not_ a track.
