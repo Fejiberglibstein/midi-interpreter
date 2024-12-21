@@ -1,28 +1,16 @@
-.data
-	## Name of the midi file to read from. In the future this should be changed
-	## to read from user input for file.
-	FileName: .asciiz "../examples/test.mid"
-
-	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
-	## instrument, and one byte for volume
-	Channels: .space 32 # 2 bytes * 16 channels
-
+.data 
 	## All the header chunks for a midi file are 4 bits for the chunk type, 4
 	## bytes for chunk length, and 6 bytes for the header's content.
 	##
 	## All midi header chunks are _always_ 6 bytes
 	HeaderChunk: .space 14
 
+	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
+	## instrument, and one byte for volume
+	Channels: .space 32 # 2 bytes * 16 channels
+
+
 .text
-.globl main
-main:
-	jal parse_midi_file
-	li $v0 10
-	syscall
-
-
-################################################################################
-
 .globl parse_midi_file
 parse_midi_file:
 	# Make room on the stack for the return address
