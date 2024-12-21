@@ -8,6 +8,8 @@
 	NoHeader: .asciiz "There was no header chunk found"
 	.globl WrongFormat
 	WrongFormat: .asciiz "Only multitrack files are supported (format type 1)"
+	.globl BadTracks
+	BadTracks: .asciiz "The midi file is not correctly formatted (wrong number of track)"
 
 	## Exit and print out an error
 	##

@@ -17,42 +17,32 @@ parse_midi_file:
 	sw $ra 0($sp)
 
 	# Open a file for reading, file descriptor will go into $v0
-	la $a0  FileName # filename
-	li $a1  0x0      # flags
-	li $a2  0x0      # mode, 0 for read
-	li $v0  13       # 13 is for opening files
+	la $a0 FileName # filename
+	li $a1 0x0      # flags
+	li $a2 0x0      # mode, 0 for read
+	li $v0 13       # 13 is for opening files
 	syscall
 
 
 	# if file descriptor less than 0, error
-	la $a0  FileNotFound
+	la $a0 FileNotFound
 	blt $v0 $zero exit_with_error
 
 	move $s7  $v0 # move file descriptor into s7
 
 
 	# Read from the file descriptor
-	move $a0  $s7       # file descriptor
-	la $a1  HeaderChunk # buffer location
-	li $a2  12          # maximum number of characters to read
-	li $v0  14          # 14 is for reading files
+	move $a0 $s7       # file descriptor
+	la $a1 HeaderChunk # buffer location
+	li $a2 12          # maximum number of characters to read
+	li $v0 14          # 14 is for reading files
 	syscall
 
 	# Parse the header
 	jal validate_header
-	move $s1 $v0 # Put the number of tracks returned into s1
-
-	# Allocate room for an array of pointers. This array of pointers will be
-	# used to store the addresses of each track chunk.
-	#
-	# We have `$s0` amount of tracks, each pointer is 4 bytes, so we need to
-	# multiply by 4 and then call sbrk to allocate system memory
-	sll $a0 $s1 2 # a0: number of bytes to allocate (4 * t0)
-	li $v0 9      # 9 is syscall for sbrk
-	syscall
-	move $s0 $v0 # Move the pointer returned by sbrk into s0
-
-
+	move $a0 $v0 # Put the number of tracks returned into a0
+	move $a1 $s7 # Put the file descriptor into a1
+	jal allocate_tracks
 
 	# Pop the return address off the stack
 	lw $ra 0($sp)
@@ -80,7 +70,7 @@ validate_header:
 	move $s0 $a0
 
 	# Make sure first four bytes are MThd
-	lw $t0 0($s0)     # Get the 4 byte header from the chunk, this should be `MThd`
+	lw $t0 0($s0)     # Get the 4 byte header from the chunk
 	li $t1 0X4D546864 # Load `MThd` into t1
 	# if t0 and t1 arent equal, error
 	la $a0 NoHeader
@@ -105,3 +95,91 @@ validate_header:
 	jr $ra
 
 ################################################################################
+
+
+	## Allocates space for an pointer array. Each pointer in this array will
+	## point to where the track data is in memory.
+	##
+	## $a0: number of tracks we have
+	## $a1: file descriptor to read from
+	## $v0: Pointer to an array of pointers
+allocate_tracks:
+	# Allocate space on the stack
+	addi $sp $sp -12
+	sw $s0 0($sp)
+	sw $s1 4($sp)
+	sw $s2 8($sp)
+
+	move $s0 $a0 # move the number of tracks we have into s0
+	move $s1 $a1 # move the file descriptor into s1
+
+	# Allocate room for an array of pointers. This array of pointers will be
+	# used to store the addresses of each track chunk.
+	#
+	# We have `$s0` amount of tracks, each pointer is 4 bytes, so we need to
+	# multiply by 4 and then call sbrk to allocate system memory
+	sll $a0 $a0 2 # a0: number of bytes to allocate (4 * a0)
+	li $v0 9      # 9 is syscall for sbrk
+	syscall
+	move $s2 $v0 # Move the pointer to the allocated space into s2
+
+
+	# Now we can loop through all the track chunks in the file. 
+	#
+	# A track chunk is made up of
+	#	`<chunk type (4 bytes)> <length (4 bytes)> <MTrk event>+`
+	# A MTrk event is made up of
+	#	`<delta-time (variable length)> <event (length depends on the event)>`
+	# 
+	# Each track chunk will follow each other, one after another.
+
+	# Allocate space on the stack, this is where we will put the chunk type and
+	# length of each chunk.
+	addi $sp $sp -8
+_loop:
+
+	# Read from the file descriptor to get the next chunk's header
+	move $a0 $s1 # file descriptor
+	move $a1 $sp # buffer location (we're storing what's read on the stack)
+	li $a2 8     # maximum number of characters to read
+	li $v0 14    # 14 is for reading files
+	syscall
+
+
+	lw $t2 4($sp) # Get the length of the chunk into t2
+	# Make sure first four bytes are MTrk
+	lw $t0 0($sp)     # Get the 4 byte header from the chunk
+	li $t1 0x4D54726B # Load `MTrk` into t1
+	# if t0 and t1 arent equal, branch to this if
+	bne $t0 $t1 _not_track
+
+	# Allocate room for this chunk on the heap
+	move $a0 $t2 # the number of bytes to allocate
+	li $v0 9     # 9 is for sbrk
+	syscall
+
+
+_loop_done:
+
+
+	# Read the memory into null and then continue on the loop. This is only
+	# called when a chunk is _not_ a track.
+	#
+	# I do not think this will work because i dont think you can have the buffer
+	# location be null. We will just assume all files don't have chunks that
+	# aren't tracks
+_not_track:
+	# Read from the file descriptor to get the chunk's bad data
+	move $a0 $s1   # file descriptor
+	move $a1 $zero # buffer location (we're piping it into null)
+	move $a2 $t2   # maximum number of characters to read
+	li $v0 14      # 14 is for reading files
+	syscall
+
+
+
+
+
+_error:
+	la $a0 BadTracks
+	bne $t0 $t1 exit_with_error
