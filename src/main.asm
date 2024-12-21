@@ -13,11 +13,6 @@
 	## All midi header chunks are _always_ 6 bytes
 	HeaderChunk: .space 14
 
-	## Errors
-	FileNotFound: .asciiz "Could not open file"
-	FileNotRead: .asciiz "Could not read from file"
-	NoHeader: .asciiz "There was no header chunk found"
-
 .text
 .globl main
 main:
@@ -36,7 +31,7 @@ main:
 	move $a0  $s7       # file descriptor
 	la $a1  HeaderChunk # buffer location
 	li $a2  12          # maximum number of characters to read
-	li $v0  14          # 13 is for opening files
+	li $v0  14          # 14 is for reading files
 	syscall
 
 	# Parse the header
