@@ -39,31 +39,42 @@ parse_midi_file:
 	syscall
 
 	# Parse the header
-	jal parse_header
+	jal validate_header
+	move $s1 $v0 # Put the number of tracks returned into s1
+
+	# Allocate room for an array of pointers. This array of pointers will be
+	# used to store the addresses of each track chunk.
+	#
+	# We have `$s0` amount of tracks, each pointer is 4 bytes, so we need to
+	# multiply by 4 and then call sbrk to allocate system memory
+	sll $a0 $s1 2 # a0: number of bytes to allocate (4 * t0)
+	li $v0 9      # 9 is syscall for sbrk
+	syscall
+	move $s0 $v0 # Move the pointer returned by sbrk into s0
 
 
 
 	# Pop the return address off the stack
 	lw $ra 0($sp)
-	addi $sp 4
+	addi $sp $sp 4
 	jr $ra
+
 
 ################################################################################
 
 
-	## Parses the header chunk of the file. This assumes the header chunk has
-	## been filled with meaningful data by reading from a midi file
+	## Validates that the header chunk is correctly a midi file and ensures that
+	## the midi file is format type 1
 	##
-	## The only supported files (at the moment) are type one. Any other file
-	## type will result in an error.
+	## The only supported format type (at the moment) is type one. Any other
+	## format type will result in an error.
 	##
 	## $a0: address of the start of the header (should be first byte in the
 	##      file)
-	## $v0: pointer to a region of memory allocated for placing all the
-	## addresses of tracks in; `Track *[]`
-parse_header:
+	## $v0: number of tracks in the file
+validate_header:
 	# Make room on the stack for s0
-	addi $sp -4
+	addi $sp $sp -4
 	sw $s0 0($sp)
 
 	move $s0 $a0
@@ -85,23 +96,12 @@ parse_header:
 
 	# Get the `ntrks` part of the header, this is the amount of tracks inside
 	# the file
-	lh $t0 10($s1) # Get the ntrks from the chunks
-
-	# Allocate room on the heap for an array of pointers, the amount of pointers
-	# is given by our `$t0` value.
-	#
-	# We have `$t0` amount of tracks, each pointer is 4 bytes, so we need to
-	# multiply by 4 and then call sbrk to allocate system memory
-	sll $a0 $t0 2  # a0: number of bytes to allocate (4 * t0)
-	li $v0 9 # 9 is syscall for sbrk
-	syscall
-	# here, v0 is the pointer to the region of memory we allocated, like malloc
+	lh $v0 10($s0) # Get the ntrks from the chunks
 
 	# Reset stack pointer
 	lw $s0 0($sp)
-	addi $sp 4
+	addi $sp $sp 4
 
 	jr $ra
-
 
 ################################################################################
