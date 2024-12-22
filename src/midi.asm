@@ -3,12 +3,12 @@
 	## bytes for chunk length, and 6 bytes for the header's content.
 	##
 	## All midi header chunks are _always_ 6 bytes
-	.align 4
+	.align 2
 	HeaderChunk: .space 14
 
 	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	## instrument, and one byte for volume
-	.align 4
+	.align 2
 	Channels: .space 32 # 2 bytes * 16 channels
 
 .text

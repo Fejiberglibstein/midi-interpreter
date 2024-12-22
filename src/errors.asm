@@ -1,19 +1,19 @@
 .data
 	## Errors
 	.globl FileNotFound
-	.align 4
+	.align 2
 	FileNotFound: .asciiz "Could not open file"
 	.globl FileNotRead
-	.align 4
+	.align 2
 	FileNotRead: .asciiz "Could not read from file"
 	.globl NoHeader
-	.align 4
+	.align 2
 	NoHeader: .asciiz "There was no header chunk found"
 	.globl WrongFormat
-	.align 4
+	.align 2
 	WrongFormat: .asciiz "Only multitrack files are supported (format type 1)"
 	.globl BadTracks
-	.align 4
+	.align 2
 	BadTracks: .asciiz "The midi file is not correctly formatted (wrong number of track)"
 
 .text
