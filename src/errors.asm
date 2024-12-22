@@ -16,6 +16,7 @@
 	.align 4
 	BadTracks: .asciiz "The midi file is not correctly formatted (wrong number of track)"
 
+.text
 	## Exit and print out an error
 	##
 	## $a0: address of null terminated string to exit with
