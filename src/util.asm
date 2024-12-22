@@ -32,15 +32,51 @@ _loop:
 ################################################################################
 
 
-	## Get the length of a chunk from the header
+	## Fixes the endianness of the bytes read from the file
 	##
-	## $a0: address of the starting byte of the chunk
-	## $v0: length of the chunk
-.globl read_chunk
-read_chunk: 
-	# Skip over the 4 bytes for the chunk type and read the 32 bit length of the
-	# chunk
-	lw $v0 4($a0) 
+	## Because reading from a file puts the bytes of a word in the wrong
+	## endianness, we need to fix it
+	##
+	## a0: starting address of what was read from the file
+	## a1: amount of bytes we read
+.globl fix_file_endianness
+fix_file_endianness:
+	li $t0 0
+	move $t1 $a0
+_loop:
+	lw $a0 0($t1)
+	jal reverse_endianness
+	addi $t0 $t0 1
+	addi $t1 $t1 4
+	bne $t0 $a1 _loop
+
+	jr $ra
 
 
-################################################################################
+	## Reverses the endianness of a word
+	##
+	## a0: register to reverse the bytes of
+reverse_endianness:
+	li $v0 0
+
+	li $t9 0xFF000000
+	and $t8 $a0 $t9
+	srl $t8 $t1 24
+	or  $v0 $v0 $t8
+
+	li $t9 0x00FF0000
+	and $t8 $a0 $t9
+	srl $t8 $t1 8
+	or  $v0 $v0 $t8
+
+	li $t9 0x0000FF00
+	and $t8 $a0 $t9
+	sll $t8 $t1 8
+	or  $v0 $v0 $t8
+
+	li $t9 0x000000FF
+	and $t8 $a0 $t9
+	sll $t8 $t1 24
+	or  $v0 $v0 $t8
+
+	jr $ra
