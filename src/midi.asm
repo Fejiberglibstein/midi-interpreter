@@ -6,6 +6,11 @@
 	.align 2
 	HeaderChunk: .space 14
 
+
+	## space to put chunks header & length
+	.align 2
+	ChunkLength: .space 8 
+
 	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	## instrument, and one byte for volume
 	.align 2
@@ -33,7 +38,7 @@ parse_midi_file:
 	# Read from the file descriptor
 	move $a0 $s7       # file descriptor
 	la $a1 HeaderChunk # buffer location
-	li $a2 12          # maximum number of characters to read
+	li $a2 14          # maximum number of characters to read
 	li $v0 14          # 14 is for reading files
 	syscall
 	jal fix_file_endianness
@@ -133,26 +138,22 @@ allocate_tracks:
 	# 
 	# Each track chunk will follow each other, one after another.
 
-	# Allocate space on the stack, this is where we will put the chunk type and
-	# length of each chunk.
-	addi $sp $sp -8
-
 	# for (int i = 0;i < ntrks;i++) (i only increments on a track chunk though)
 	li $t7 0 # This will be our `i` in the loop, 
 _loop: 
 
 	# Read from the file descriptor to get the next chunk's header
-	move $a0 $s1 # file descriptor
-	move $a1 $sp # buffer location (we're storing what's read on the stack)
-	li $a2 8     # maximum number of characters to read
-	li $v0 14    # 14 is for reading files
+	move $a0 $s1       # file descriptor
+	la $a1 ChunkLength # buffer location
+	li $a2 8           # maximum number of characters to read
+	li $v0 14          # 14 is for reading files
 	syscall
 	jal fix_file_endianness
 
-	lw $t2 4($sp) # Get the length of the chunk into t2
+	lw $t2 ChunkLength+4 # Get the length of the chunk into t2
 	# Make sure first four bytes are MTrk
-	lw $t0 0($sp)     # Get the 4 byte header from the chunk
-	li $t1 0x4D54726B # Load `MTrk` into t1
+	lw $t0 ChunkLength # Get the 4 byte header from the chunk
+	li $t1 0x4D54726B  # Load `MTrk` into t1
 	# if t0 and t1 arent equal, branch to this if
 	bne $t0 $t1 _not_track
 
@@ -161,7 +162,8 @@ _loop:
 	li $v0 9     # 9 is for sbrk
 	syscall
 	# Store the pointer we just allocated into the array of pointers we have
-	add $t0 $s2 $t7 # Shift the base address of array by i
+	sll $t0 $t7 2 # multiply t7 by 4
+	addi $t0 $s2 $t7 # Shift the base address of array by i * 4
 	sw $v0 0($t0) 
 
 	# Read from the file descriptor to get the chunks data
@@ -170,14 +172,12 @@ _loop:
 	move $a2 $t2 # maximum number of characters to read
 	li $v0 14    # 14 is for reading files
 	syscall
+	jal fix_file_endianness
 
 	addi $t7 $t7 1 # i ++
 	bne $t7 $s0 _loop # if i != ntrks, continue
 
-	# loop is over
-	addi $sp $sp 8 # Deallocate the space we had from storing chunk header
-
-	# Allocate space on the stack
+	# Deallocate space on the stack
 	lw $s0 0($sp)
 	lw $s1 4($sp)
 	lw $s2 8($sp)
