@@ -6,11 +6,6 @@
 	.align 2
 	HeaderChunk: .space 14
 
-
-	## space to put chunks header & length
-	.align 2
-	ChunkLength: .space 8 
-
 	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	## instrument, and one byte for volume
 	.align 2
@@ -144,15 +139,15 @@ _loop:
 
 	# Read from the file descriptor to get the next chunk's header
 	move $a0 $s1       # file descriptor
-	la $a1 ChunkLength # buffer location
+	la $a1 HeaderChunk # buffer location
 	li $a2 8           # maximum number of characters to read
 	li $v0 14          # 14 is for reading files
 	syscall
 	jal fix_file_endianness
 
-	lw $t2 ChunkLength+4 # Get the length of the chunk into t2
+	lw $t2 HeaderChunk+4 # Get the length of the chunk into t2
 	# Make sure first four bytes are MTrk
-	lw $t0 ChunkLength # Get the 4 byte header from the chunk
+	lw $t0 HeaderChunk # Get the 4 byte header from the chunk
 	li $t1 0x4D54726B  # Load `MTrk` into t1
 	# if t0 and t1 arent equal, branch to this if
 	bne $t0 $t1 _not_track
