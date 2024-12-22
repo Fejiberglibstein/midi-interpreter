@@ -37,20 +37,27 @@ _loop:
 	## Because reading from a file puts the bytes of a word in the wrong
 	## endianness, we need to fix it
 	##
-	## a0: starting address of what was read from the file
-	## a1: amount of bytes we read
+	## (no a0 because this way we can reuuse parameters that are used for read
+	## syscall, minimizing instructions)
+	## a1: starting address of what was read from the file
+	## a2: amount of bytes we read
 .globl fix_file_endianness
 fix_file_endianness:
+	move $fp $ra
 	li $t0 0
-	move $t1 $a0
-_loop:
+
+	move $t1 $a1
+_endian_loop:
 	lw $a0 0($t1)
 	jal reverse_endianness
+	sw $v0 0($t1)
+
 	addi $t0 $t0 1
 	addi $t1 $t1 4
-	bne $t0 $a1 _loop
 
-	jr $ra
+	bne $t0 $a2 _endian_loop
+
+	jr $fp
 
 
 	## Reverses the endianness of a word
@@ -61,22 +68,22 @@ reverse_endianness:
 
 	li $t9 0xFF000000
 	and $t8 $a0 $t9
-	srl $t8 $t1 24
+	srl $t8 $t8 24
 	or  $v0 $v0 $t8
 
 	li $t9 0x00FF0000
 	and $t8 $a0 $t9
-	srl $t8 $t1 8
+	srl $t8 $t8 8
 	or  $v0 $v0 $t8
 
 	li $t9 0x0000FF00
 	and $t8 $a0 $t9
-	sll $t8 $t1 8
+	sll $t8 $t8 8
 	or  $v0 $v0 $t8
 
 	li $t9 0x000000FF
 	and $t8 $a0 $t9
-	sll $t8 $t1 24
+	sll $t8 $t8 24
 	or  $v0 $v0 $t8
 
 	jr $ra

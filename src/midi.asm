@@ -36,6 +36,7 @@ parse_midi_file:
 	li $a2 12          # maximum number of characters to read
 	li $v0 14          # 14 is for reading files
 	syscall
+	jal fix_file_endianness
 
 	# Parse the header
 	la $a0 HeaderChunk # Address of the memory spot
@@ -77,7 +78,7 @@ validate_header:
 	bne $t0 $t1 exit_with_error
 
 	# Make sure the format of the chunk is 1
-	lh $t0 8($s0) # Get the format from the chunk, we skipped type and length
+	lh $t0 10($s0) # Get the format from the chunk, we skipped type and length
 	li $t1 1      # Format should be 1
 	# if t0 and t1 arent equal, error
 	la $a0 WrongFormat
@@ -85,7 +86,7 @@ validate_header:
 
 	# Get the `ntrks` part of the header, this is the amount of tracks inside
 	# the file
-	lh $v0 10($s0) # Get the ntrks from the chunks
+	lh $v0 8($s0) # Get the ntrks from the chunks
 
 	# Reset stack pointer
 	lw $s0 0($sp)
@@ -146,6 +147,7 @@ _loop:
 	li $a2 8     # maximum number of characters to read
 	li $v0 14    # 14 is for reading files
 	syscall
+	jal fix_file_endianness
 
 	lw $t2 4($sp) # Get the length of the chunk into t2
 	# Make sure first four bytes are MTrk
