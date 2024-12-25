@@ -10,6 +10,17 @@
 	## instrument, and one byte for volume
 	.align 2
 	Channels: .space 32 # 2 bytes * 16 channels
+	
+	## Pointer to the region of memory where we allocated the list of track
+	## pointers
+	.align 2
+	TrackChunks: .word 0
+
+	## Pointer to the region of memory where we allocated the list of delay for
+	## each track
+	.align 2
+	TrackDelays: .word 0
+
 
 .text
 .globl parse_midi_file
@@ -116,12 +127,21 @@ allocate_tracks:
 	# Allocate room for an array of pointers. This array of pointers will be
 	# used to store the addresses of each track chunk.
 	#
-	# We have `$s0` amount of tracks, each pointer is 4 bytes, so we need to
+	# We have `$a0` amount of tracks, each pointer is 4 bytes, so we need to
 	# multiply by 4 and then call sbrk to allocate system memory
 	sll $a0 $a0 2 # a0: number of bytes to allocate (4 * a0)
 	li $v0 9      # 9 is syscall for sbrk
 	syscall
 	move $s2 $v0 # Move the pointer to the allocated space into s2
+	sw $v0 TrackChunks
+
+	# We also want to make room for the delay that each track should store
+	#
+	# This should be the same size as the previous allocation
+			      # a0 has the same value as previous allocation call
+	li $v0 9      # 9 is syscall for sbrk
+	syscall
+	sw $v0 TrackDelays
 
 
 	# Now we can loop through all the track chunks in the file. 
