@@ -4,25 +4,28 @@
 	## 
 	## $a0: address of the starting byte of the number to be decoded
 	## $v0: computed number
+	## $v1: offset from starting byte to final byte
 .globl decode_var_len
 decode_var_len:
 	# Set the return value to 0 initially
 	li $v0 0
 
 	# Fill registers with stuff i need
-	li $t0 0   # Byte we're currently reading
+	li $t0 0     # Byte we're currently reading
 	move $t1 $a0 # Position of the byte we're reading
+	li $v1 0     # i
 
 _loop:
-	sll $v0  $v0 7 # Shift the accumulated value by 7 bits
+	sll $v0 $v0 7 # Shift the accumulated value by 7 bits
 
-	lbu $t0  0($t1)	# read value at t1 into t0
-	addi $t1  $t1 1 # Shift t1 over by one byte for the next time we read
+	lbu $t0 0($t1) # read value at t1 into t0
+	addi $t1 $t1 1 # Shift t1 over by one byte for the next time we read
+	addi $v1 $v1 1 # Add one to the total offset
 
-	andi $t2  $t0 0x7F # Ignore the eighth bit of the byte
-	add $v0  $v0 $t2   # Add the 7 bits we anded to the result
+	andi $t2 $t0 0x7F # Ignore the eighth bit of the byte
+	add $v0 $v0 $t2   # Add the 7 bits we anded to the result
 
-	andi $t2  $t0 0x8   # Get only the last bit of the byte
+	andi $t2 $t0 0x8   # Get only the last bit of the byte
 	bne $t2 $zero _loop # repeat the loop if we have a 1 at the end
 
 
@@ -118,6 +121,4 @@ _else:
 	addi $t0 $t0 4
 	bne $t0 $a0 _num_loop
 
-	# Reset stack after calling the method
-	slr $a0 $a0 2 # divide a0 by 4 since we multiplied by 4 earlier
 	jal $ra
