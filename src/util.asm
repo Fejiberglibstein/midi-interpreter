@@ -94,8 +94,8 @@ reverse_endianness:
 
 	## Returns the index of the lowest number from a list of numbers
 	##
-	## stack: elements in the list, the length is $a0
 	## $a0: Length of the list
+	## $a1: Pointer of the first element in the list
 	## $v0: index of the lowest number
 lowest_num:
 	sll $a0 $a0 2 # multiply a0 by 4
@@ -103,7 +103,7 @@ lowest_num:
 	lw $t0 0      # t0 is `i`
 
 _num_loop:
-	add $t1 $sp $v0 # t1 = stack + index of lowest number
+	add $t1 $a1 $v0 # t1 = stack + index of lowest number
 	lw $t2 0($t1)   # t0 is the value of our current lowest number
 
 	add $t1 $sp $t0 # t1 = stack + i
@@ -120,6 +120,4 @@ _else:
 
 	# Reset stack after calling the method
 	slr $a0 $a0 2 # divide a0 by 4 since we multiplied by 4 earlier
-	add $sp $sp $a0
-
 	jal $ra
