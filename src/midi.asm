@@ -220,3 +220,42 @@ _not_track:
 _error:
 	la $a0 BadTracks
 	bne $t0 $t1 exit_with_error
+
+################################################################################
+
+
+	## Iterates over all 0 length tracks in a track chunk. Once a track has a
+	## variable length > 0, the procedure returns the variable length
+	##
+	## a0: Address of the first track in the chunk
+	## v0: Variable length value
+	## v1: address of the variable length
+track_chunk_iter:
+	# Make room on the stack for $ra, $s0, $s1
+	addi $sp $sp -16
+	sw $ra 0($sp)
+	sw $s0 4($sp)
+	sw $s1 8($sp)
+	sw $s2 12($sp)
+
+	li $s0 0     # s0 is i
+	li $s1 0     # s1 is where we read the variable length into
+	move $s2 $a0 # s2 contains the address of the track we're currently reading
+_chunk_loop:
+	bne $t1 $zero _end # go to the end if our variable length is not 0
+
+	# a0 already has the starting address
+	jal decode_var_len
+
+
+_end:
+	# We're returning the last read variable length 
+	move $v0 $s1
+
+	lw $ra 0($sp)
+	lw $s0 4($sp)
+	lw $s1 8($sp)
+	lw $s2 12($sp)
+	addi $sp $sp 16
+
+	jr $ra
