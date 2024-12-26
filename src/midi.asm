@@ -242,11 +242,14 @@ track_chunk_iter:
 	li $s1 0     # s1 is where we read the variable length into
 	move $s2 $a0 # s2 contains the address of the track we're currently reading
 _chunk_loop:
-	bne $t1 $zero _end # go to the end if our variable length is not 0
+	bne $s1 $zero _end # go to the end if our variable length is not 0
 
-	# a0 already has the starting address
+	move $a0 $s2 # a0 is the address of the variable length
 	jal decode_var_len
+	move $s1 $v0    # Put the variable length value into s1
+	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
 
+	jal execute_track
 
 _end:
 	# We're returning the last read variable length 
