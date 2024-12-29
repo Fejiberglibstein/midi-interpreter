@@ -102,7 +102,7 @@ reverse_endianness:
 	## $v0: index of the lowest number
 lowest_num:
 	sll $a0 $a0 2 # multiply a0 by 4
-	li $v0        # v0 is the index of lowest number
+	li $v0 0      # v0 is the index of lowest number
 	lw $t0 0      # t0 is `i`
 
 _num_loop:

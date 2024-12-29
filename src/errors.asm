@@ -15,9 +15,6 @@
 	.globl BadTracks
 	.align 2
 	BadTracks: .asciiz "The midi file is not correctly formatted (wrong number of track)"
-	.globl BadTracks
-	.align 2
-	BadEvent: .asciiz "This should not happen"
 
 .text
 	## Exit and print out an error
