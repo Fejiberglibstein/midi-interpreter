@@ -6,11 +6,6 @@
 	.align 2
 	HeaderChunk: .space 14
 
-	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
-	## instrument, and one byte for volume
-	.align 2
-	Channels: .space 32 # 2 bytes * 16 channels
-	
 	## Pointer to the region of memory where we allocated the list of track
 	## pointers
 	.align 2
@@ -178,7 +173,7 @@ _loop:
 	syscall
 	# Store the pointer we just allocated into the array of pointers we have
 	sll $t0 $t7 2 # multiply t7 by 4
-	addi $t0 $s2 $t7 # Shift the base address of array by i * 4
+	add $t0 $s2 $t7 # Shift the base address of array by i * 4
 	sw $v0 0($t0) 
 
 	# Read from the file descriptor to get the chunks data
@@ -249,7 +244,7 @@ _chunk_loop:
 	move $s1 $v0    # Put the variable length value into s1
 	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
 
-	jal execute_track
+	jal execute_event
 
 _end:
 	# We're returning the last read variable length 
