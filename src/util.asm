@@ -121,4 +121,4 @@ _else:
 	addi $t0 $t0 4
 	bne $t0 $a0 _num_loop
 
-	jal $ra
+	jr $ra
