@@ -15,6 +15,7 @@
 	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	## instrument, and one byte for volume
 	.align 2
+	.globl Channels
 	Channels: .space 32 # 2 bytes * 16 channels
 
 
