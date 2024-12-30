@@ -173,7 +173,7 @@ _loop:
 	syscall
 	# Store the pointer we just allocated into the array of pointers we have
 	sll $t0 $t7 2 # multiply t7 by 4
-	add $t0 $s2 $t7 # Shift the base address of array by i * 4
+	add $t0 $s2 $t0 # Shift the base address of array by i * 4
 	sw $v0 0($t0) 
 
 	# Read from the file descriptor to get the chunks data
