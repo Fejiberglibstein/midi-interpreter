@@ -50,6 +50,14 @@ parse_midi_file:
 	move $a0 $v0 # Put the number of tracks returned into a0
 	move $a1 $s7 # Put the file descriptor into a1
 	jal allocate_tracks
+	move $s0 $v0 # Move the pointer returned to s0
+
+	# Iterate over all the tracks
+
+	# TrackChunks is a `***Track` (Three pointers!)
+	lw $t0 TrackChunks # Load the pointer to the first track chunk into t0
+	lw $a0 0($t0)   # Dereference the pointer, now a0 is the first track in list
+	jal track_chunk_iter
 
 	# Pop the return address off the stack
 	lw $ra 0($sp)
@@ -106,9 +114,10 @@ validate_header:
 	## Allocates space for an pointer array. Each pointer in this array will
 	## point to where the track data is in memory.
 	##
+	## !!! The pointers we allocate will go into TrackChunks and TrackDelays
+	##
 	## $a0: number of tracks we have
 	## $a1: file descriptor to read from
-	## $v0: Pointer to an array of pointers
 allocate_tracks:
 	# Allocate space on the stack
 	addi $sp $sp -16

@@ -10,8 +10,8 @@
 	## note are as follows:
 	##	
 	##	struct note {
-	##		word start; // The millisecond the note started on. 
-	## 		byte channel;    // The channel number of the note
+	##		word start;   // The millisecond the note started on. 
+	## 		byte channel; // The channel number of the note
 	##		byte key;   
 	## 		byte instrument; 
 	## 		byte volume;    
