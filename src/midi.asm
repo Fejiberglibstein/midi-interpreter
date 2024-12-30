@@ -143,8 +143,8 @@ allocate_tracks:
 	# We also want to make room for the delay that each track should store
 	#
 	# This should be the same size as the previous allocation
-			      # a0 has the same value as previous allocation call
-	li $v0 9      # 9 is syscall for sbrk
+			 # a0 has the same value as previous allocation call
+	li $v0 9 # 9 is syscall for sbrk
 	syscall
 	sw $v0 TrackDelays
 
@@ -176,6 +176,13 @@ _loop:
 	li $t1 0x4D54726B  # Load `MTrk` into t1
 	# if t0 and t1 arent equal, branch to this if
 	bne $t0 $t1 _not_track
+
+	# We need to align the length of the track to a word, so we should round it
+	# up to the nearest 4, e.g. if the length is 13, we should make it 16.
+	modi $t0 $t2 4 # length % 4
+	li $t1 4
+	sub $t0 $t1 $t0 # 4 - (length % 4)
+	add $t2 $t2 $t0 # length = length + (4 - (length % 4))
 
 	# Allocate room for this chunk on the heap
 	move $a0 $t2 # the number of bytes to allocate
@@ -255,7 +262,13 @@ _chunk_loop:
 	move $s1 $v0    # Put the variable length value into s1
 	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
 
+	move $a0 $s2 # a0 is the address of the event
+	move $a1 0   # a1 is the current time, TODO: IDK IF THIS IS NECESSARY
 	jal execute_event
+
+	add $s2 $s2 $v1 # Add the length of the event to the address
+
+	j _chunk_loop
 
 _end:
 	# We're returning the last read variable length 
