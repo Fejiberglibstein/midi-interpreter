@@ -93,16 +93,18 @@ _note_off:
 	j end
 
 _note_on:
-	li $v0 3 # The length of this message is 3 bytes
-
 	# Get the half word from the channel list at our channel number.
 	#
 	# the list of channels consists of 2 bytes, a byte for instrument and a byte
 	# for volume. We'll load these two bytes and then use them to add to the end
 	# of the note array.
-	sll $t0 $s1 1        # Multiply the channel number by 2
-	lh $t0 Channels($t0) # Get the half word at channel number
 
+	move $a0 $s2 # a0 is the current time
+	move $a1 $s1 # a1 is the channel number
+	lb $a2 1($s0) # The second byte of the event is the key for `Note On` Event
+	jal add_note
+
+	li $v0 3 # The length of this message is 3 bytes
 	j end
 
 _ctrl_change:
@@ -114,18 +116,18 @@ _program_change:
 	j end
 
 _key_pressure:
-	li $v0 3 # The length of this message is 3 bytes
 	# We can just ignore this message :troll:
+	li $v0 3 # The length of this message is 3 bytes
 	j end
 
 _channel_pressure:
-	li $v0 2 # The length of this message is 2 bytes
 	# We can just ignore this message :troll:
+	li $v0 2 # The length of this message is 2 bytes
 	j end
 
 _pitch_wheel_change:
-	li $v0 3 # The length of this message is 3 bytes
 	# We can just ignore this message :troll:
+	li $v0 3 # The length of this message is 3 bytes
 	j end
 
 
