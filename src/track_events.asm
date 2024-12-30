@@ -1,13 +1,9 @@
 ##																			  ##
 ##                            SUPPORTED TRACK EVENTS                          ##  
 ##																			  ##
-	## Midi controller messages
-	# 
-	# 
-
 	## Midi channel voice messages
 	#
-	# 
+	# All are supported
 
 	## Meta Events
 	#
@@ -33,18 +29,22 @@
 	## are currently supported
 	##
 	## a0: address of the event
-	## v0: offset to move by after reading this track event
+	## a1: current time
+	## v0: the length of this track event, this is used to offset after reading
+	##	   this event
 	## v1: Has different effects depending on its value.
 	##	- 0x000000: No effect
 	##	- 0xFFFFFF: End of track
 .globl execute_event
 execute_event:
 
-	addi $sp $sp -8
+	addi $sp $sp -12
 	sw $s0 0($sp)
 	sw $s1 4($sp)
+	sw $s2 8($sp)
 
-	move $s0 $a0
+	move $s0 $a0 # s0 is the address of the event
+	move $s2 $a1 # s2 is the current time in the midi song
 
 	li $v1 0
 	lb $t0 0($s0)
@@ -65,8 +65,8 @@ execute_event:
 	j exit_with_error
 
 meta_event:
-	lb $t0 2($s0)  # This is the length of the event
-	addi $v0 $t0 2 # The offset to move in total is 2 + length 
+	lb $t0 2($s0)  # This is the length of the meta message
+	addi $v0 $t0 2 # The total length of the track event is 2 + length we read
 
 	lb $t0 1($s0)   # This is whatever meta event it is
 	li $t1 0x2F     # load with 2F (end of track meta event)
@@ -84,34 +84,55 @@ midi_channel:
 	srl $t1 $t0 4     # Shift 4 bits so we have the channel status bits
 	andi $t1 $t1 0x07 # Remove the fourth bit from the status bits
 
-	lw $t7 jtable($t1) # Jump to the `$t1`th label.
+	lw $t7 jtable($t1) # Load the label that is the $t1'th element in the jtable
+	jr $t7             # Jump to the label we loaded from the jtable
 
 _note_off:
+	li $v0 3 # The length of this message is 3 bytes
 	j end
 
 _note_on:
-	j end
+	li $v0 3 # The length of this message is 3 bytes
 
-_key_pressure:
+	# Get the half word from the channel list at our channel number.
+	#
+	# the list of channels consists of 2 bytes, a byte for instrument and a byte
+	# for volume. We'll load these two bytes and then use them to add to the end
+	# of the note array.
+	sll $t0 $s1 1        # Multiply the channel number by 2
+	lh $t0 Channels($t0) # Get the half word at channel number
+
 	j end
 
 _ctrl_change:
+	li $v0 3 # The length of this message is 3 bytes
 	j end
 
 _program_change:
+	li $v0 2 # The length of this message is 2 bytes
+	j end
+
+_key_pressure:
+	li $v0 3 # The length of this message is 3 bytes
+	# We can just ignore this message :troll:
 	j end
 
 _channel_pressure:
+	li $v0 2 # The length of this message is 2 bytes
+	# We can just ignore this message :troll:
 	j end
 
 _pitch_wheel_change:
+	li $v0 3 # The length of this message is 3 bytes
+	# We can just ignore this message :troll:
 	j end
 
 
 end:
 	lw $s0 0($sp)
 	lw $s1 4($sp)
-	addi $sp $sp 8
+	lw $s2 8($sp)
+	addi $sp $sp 12
 
 	jr $ra
 
