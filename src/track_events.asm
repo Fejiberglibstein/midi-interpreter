@@ -29,23 +29,20 @@
 	## Does whatever an event is in the midi file format. Not all track events
 	## are currently supported
 	##
-	## a0: address of the event
-	## a1: current time
-	## v0: the length of this track event, this is used to offset after reading
-	##	   this event
-	## v1: Has different effects depending on its value.
+	## $a0: address of the event
+	## $v0: the length of this track event, this is used to offset after reading
+	##      this event
+	## $v1: Has different effects depending on its value.
 	##	- 0x000000: No effect
 	##	- 0xFFFFFF: End of track
 .globl execute_event
 execute_event:
 
-	addi $sp $sp -12
+	addi $sp $sp -8
 	sw $s0 0($sp)
 	sw $s1 4($sp)
-	sw $s2 8($sp)
 
 	move $s0 $a0 # s0 is the address of the event
-	move $s2 $a1 # s2 is the current time in the midi song
 
 	li $v1 0
 	lb $t0 0($s0)
@@ -99,9 +96,8 @@ _note_on:
 	# for volume. We'll load these two bytes and then use them to add to the end
 	# of the note array.
 
-	move $a0 $s2 # a0 is the current time
-	move $a1 $s1 # a1 is the channel number
-	lb $a2 1($s0) # The second byte of the event is the key for `Note On` Event
+	move $a0 $s1 # a1 is the channel number
+	lb $a1 1($s0) # The second byte of the event is the key for `Note On` Event
 	jal add_note
 
 	li $v0 3 # The length of this message is 3 bytes
@@ -134,8 +130,7 @@ _pitch_wheel_change:
 end:
 	lw $s0 0($sp)
 	lw $s1 4($sp)
-	lw $s2 8($sp)
-	addi $sp $sp 12
+	addi $sp $sp 8
 
 	jr $ra
 

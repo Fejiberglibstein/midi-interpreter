@@ -46,7 +46,6 @@ struct channel { // half-word
 
 ```c
 struct note { // double-word
-    word start; // The millisecond the note started on. 
     byte channel;    // The channel number of the note
     byte key;   // 7 bits only are used
 
