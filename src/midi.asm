@@ -111,10 +111,11 @@ validate_header:
 	## $v0: Pointer to an array of pointers
 allocate_tracks:
 	# Allocate space on the stack
-	addi $sp $sp -12
+	addi $sp $sp -16
 	sw $s0 0($sp)
 	sw $s1 4($sp)
 	sw $s2 8($sp)
+	sw $ra 12($sp)
 
 	move $s0 $a0 # move the number of tracks we have into s0
 	move $s1 $a1 # move the file descriptor into s1
@@ -191,7 +192,8 @@ _loop:
 	lw $s0 0($sp)
 	lw $s1 4($sp)
 	lw $s2 8($sp)
-	addi $sp $sp 12
+	lw $ra 12($sp)
+	addi $sp $sp 16
 
 	jr $ra
 
