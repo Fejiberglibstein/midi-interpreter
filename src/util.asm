@@ -50,6 +50,9 @@ fix_file_endianness:
 	li $t0 0
 
 	move $t1 $a1
+	# Divide the amount of bytes we read by 2 to get the amount of words read
+	srl $a2 $a2 2 
+
 _endian_loop:
 	lw $a0 0($t1)
 	jal reverse_endianness
