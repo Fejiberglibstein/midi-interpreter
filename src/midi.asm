@@ -192,7 +192,7 @@ _loop:
 	move $a2 $t2 # maximum number of characters to read
 	li $v0 14    # 14 is for reading files
 	syscall
-	jal fix_file_endianness
+	# jal fix_file_endianness
 
 	addi $t7 $t7 1 # i ++
 	bne $t7 $s0 _loop # if i != ntrks, continue
