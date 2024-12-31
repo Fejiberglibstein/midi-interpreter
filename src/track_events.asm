@@ -48,7 +48,7 @@ execute_event:
 	lbu $t0 0($s0)
 
 	# If the first byte of the track event is `FF`, then it is a meta event
-	li $t1 0xFFFFFFFF
+	li $t1 0xFF
 	beq $t0 $t1 meta_event 
 
 	# If the first bit is a 1, then it is a channel event
@@ -64,7 +64,7 @@ execute_event:
 
 meta_event:
 	lbu $t0 2($s0)  # This is the length of the meta message
-	addi $v0 $t0 2 # The total length of the track event is 2 + length we read
+	addi $v0 $t0 3 # The total length of the track event is 3 + length we read
 
 	lbu $t0 1($s0)   # This is whatever meta event it is
 	li $t1 0x2F     # load with 2F (end of track meta event)

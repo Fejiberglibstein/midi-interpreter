@@ -258,7 +258,7 @@ _chunk_loop:
 	move $a0 $s2 # a0 is the address of the event
 	jal execute_event
 
-	add $s2 $s2 $v1 # Add the length of the event to the address
+	add $s2 $s2 $v0 # Add the length of the event to the address
 
 	j _chunk_loop
 
