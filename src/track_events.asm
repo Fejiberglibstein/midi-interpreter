@@ -45,7 +45,7 @@ execute_event:
 	move $s0 $a0 # s0 is the address of the event
 
 	li $v1 0
-	lb $t0 0($s0)
+	lbu $t0 0($s0)
 
 	# If the first byte of the track event is `FF`, then it is a meta event
 	li $t1 0xFFFFFFFF
@@ -63,10 +63,10 @@ execute_event:
 	j exit_with_error
 
 meta_event:
-	lb $t0 2($s0)  # This is the length of the meta message
+	lbu $t0 2($s0)  # This is the length of the meta message
 	addi $v0 $t0 2 # The total length of the track event is 2 + length we read
 
-	lb $t0 1($s0)   # This is whatever meta event it is
+	lbu $t0 1($s0)   # This is whatever meta event it is
 	li $t1 0x2F     # load with 2F (end of track meta event)
 	bne $t0 $t1 end # If not 2F, go to end
 
@@ -75,7 +75,7 @@ meta_event:
 	j end
 
 midi_channel:
-	lb $t0 0($s0) # Get the header byte of the channel event
+	lbu $t0 0($s0) # Get the header byte of the channel event
 
 	andi $s1 $t0 0x0F # Get the last 4 bits, this is our channel number
 
@@ -97,7 +97,7 @@ _note_on:
 	# of the note array.
 
 	move $a0 $s1 # a1 is the channel number
-	lb $a1 1($s0) # The second byte of the event is the key for `Note On` Event
+	lbu $a1 1($s0) # The second byte of the event is the key for `Note On` Event
 	jal add_note
 
 	li $v0 3 # The length of this message is 3 bytes
