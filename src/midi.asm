@@ -177,13 +177,6 @@ _loop:
 	# if t0 and t1 arent equal, branch to this if
 	bne $t0 $t1 _not_track
 
-	# We need to align the length of the track to a word, so we should round it
-	# up to the nearest 4, e.g. if the length is 13, we should make it 16.
-	modi $t0 $t2 4 # length % 4
-	li $t1 4
-	sub $t0 $t1 $t0 # 4 - (length % 4)
-	add $t2 $t2 $t0 # length = length + (4 - (length % 4))
-
 	# Allocate room for this chunk on the heap
 	move $a0 $t2 # the number of bytes to allocate
 	li $v0 9     # 9 is for sbrk
@@ -263,7 +256,6 @@ _chunk_loop:
 	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
 
 	move $a0 $s2 # a0 is the address of the event
-	move $a1 0   # a1 is the current time, TODO: IDK IF THIS IS NECESSARY
 	jal execute_event
 
 	add $s2 $s2 $v1 # Add the length of the event to the address

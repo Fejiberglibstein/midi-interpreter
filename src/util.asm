@@ -47,12 +47,18 @@ _loop:
 .globl fix_file_endianness
 fix_file_endianness:
 	move $fp $ra
-	li $t0 0
+	# We need to align the length of the track to a word, so we should round it
+	# up to the nearest 4, e.g. if the length is 13, we should make it 16.
+	rem $t0 $a2 4 # length % 4
+	li $t1 4
+	sub $t0 $t1 $t0 # 4 - (length % 4)
+	add $a2 $a2 $t0 # length = length + (4 - (length % 4))
 
-	move $t1 $a1
 	# Divide the amount of bytes we read by 2 to get the amount of words read
 	srl $a2 $a2 2 
 
+	li $t0 0
+	move $t1 $a1
 _endian_loop:
 	lw $a0 0($t1)
 	jal reverse_endianness
