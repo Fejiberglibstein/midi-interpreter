@@ -109,6 +109,7 @@ reverse_endianness:
 	## $a0: Length of the list
 	## $a1: Pointer of the first element in the list
 	## $v0: index of the lowest number
+.globl lowest_num
 lowest_num:
 	sll $a0 $a0 2 # multiply a0 by 4
 	li $v0 0      # v0 is the index of lowest number

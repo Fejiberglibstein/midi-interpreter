@@ -99,7 +99,6 @@ _end_of_track:
 	## $v1: Has different effects depending on its value.
 	##	- 0x000000: No effect
 	##	- 0xFFFFFF: End of track
-.globl execute_event
 execute_event:
 
 	addi $sp $sp -8
