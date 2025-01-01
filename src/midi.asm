@@ -243,19 +243,39 @@ execute_tracks:
 	sw $s0 4($sp)
 	sw $s1 8($sp)
 
+	li $s0 0 # s0 is the time that has elapsed since starting
+
 _track_loop:
 
 	lw $a0 TracksCount # a0 is the length of the list
 	lw $a1 TrackDelays # a1 is the pointer to the first element of the list
 	jal lowest_num     # v0 will be the index of the lowest number in the list
+	move $s1 $v0 # s1 is the index of lowest number
 
+	lw $t1 TrackDelays($s1) # Get the delay at the index
 
+	# When a track has reached the `2F` (track end) meta event, then we set the
+	# track delay to 0x7FFFFFFF. If the lowest value in the TrackDelays list is
+	# this value, it means all the tracks have reached their end and we can
+	# finish iterating over the tracks
+	li $t2 0x7FFFFFFF
+	beq $t1 $t2 _track_end
+
+	sub $a0 $t1 $s0 # delay of track - elapsed time (a0 is delay in ms to sleep)
+	li $v0 32       # 32 is the syscall for sleep
+	syscall
 
 	# TrackChunks is a `***Track` (Three pointers!)
-	lw $s0 TrackChunks # Load the pointer to the first track chunk into t0
-	lw $a0 0($t0)   # Dereference the pointer, now a0 is the first track in list
+	lw $t0 TrackChunks($s1) # Get the track chunk at the index
+	lw $a0 0($t0) # Dereference the pointer, now a0 is the first track in list
 
+	# v0 will be the variable length value
+	# v1 will be the address of variable length value
 	jal execute_track_events
+
+	add $t0 $s0 $v0
+	sw $v1 TrackChunks($s1) # Update the starting address to the value we got to
+	sw $t0 TrackDelays($s1) # Update the delay to be current time + delay
 
 	j _track_loop
 
