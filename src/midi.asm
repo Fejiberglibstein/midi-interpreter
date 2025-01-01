@@ -252,7 +252,9 @@ _track_loop:
 	jal lowest_num     # v0 will be the index of the lowest number in the list
 	move $s1 $v0 # s1 is the index of lowest number
 
-	lw $t1 TrackDelays($s1) # Get the delay at the index
+	lw $t0 TrackDelays # Deref the TrackDelays pointer
+	add $t0 $t0 $s1    # Add the index to the pointer
+	lw $t1 0($t0)      # Get the delay at the index
 
 	# When a track has reached the `2F` (track end) meta event, then we set the
 	# track delay to 0x7FFFFFFF. If the lowest value in the TrackDelays list is
@@ -266,7 +268,8 @@ _track_loop:
 	syscall
 
 	# TrackChunks is a `***Track` (Three pointers!)
-	lw $t0 TrackChunks($s1) # Get the track chunk at the index
+	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
+	add $t0 $t0 $s1 # Add the index offset to the list to get `list[idx]`
 	lw $a0 0($t0) # Dereference the pointer, now a0 is the first track in list
 
 	# v0 will be the variable length value
