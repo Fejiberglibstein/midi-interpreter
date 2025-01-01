@@ -16,6 +16,9 @@
 	.align 2
 	TrackDelays: .word 0
 
+	## The amount of tracks we have allocated
+	.align 2 
+	TracksCount: .word 0
 
 .text
 .globl parse_midi_file
@@ -53,11 +56,7 @@ parse_midi_file:
 	move $s0 $v0 # Move the pointer returned to s0
 
 	# Iterate over all the tracks
-
-	# TrackChunks is a `***Track` (Three pointers!)
-	lw $t0 TrackChunks # Load the pointer to the first track chunk into t0
-	lw $a0 0($t0)   # Dereference the pointer, now a0 is the first track in list
-	jal execute_track_events
+	jal execute_tracks
 
 	# Pop the return address off the stack
 	lw $ra 0($sp)
@@ -128,6 +127,7 @@ allocate_tracks:
 
 	move $s0 $a0 # move the number of tracks we have into s0
 	move $s1 $a1 # move the file descriptor into s1
+	sw $s0 TracksCount # Save the amount of tracks we have in global variable
 
 	# Allocate room for an array of pointers. This array of pointers will be
 	# used to store the addresses of each track chunk.
@@ -192,7 +192,10 @@ _loop:
 	move $a2 $t2 # maximum number of characters to read
 	li $v0 14    # 14 is for reading files
 	syscall
-	# jal fix_file_endianness
+
+	# We *DONT* need to fix the endianness of what we read here since we're only
+	# reading bytes from this part of the file, not words.
+	# jal fix_file_endianness ## COMMENTED OUT ON PURPOSE
 
 	addi $t7 $t7 1 # i ++
 	bne $t7 $s0 _loop # if i != ntrks, continue
@@ -227,63 +230,39 @@ _error:
 	la $a0 BadTracks
 	bne $t0 $t1 exit_with_error
 
-################################################################################
+
+################################################################################	
 
 
-	## Executes all 0 length tracks events in a track chunk. Once a track event
-	## has a variable length > 0, the procedure returns the variable length
+	## Iterate over all the track chunks and play the song
 	##
-	## a0: Address of the first track in the chunk
-	## v0: Variable length value
-	## v1: address of the variable length
-execute_track_events:
-	# Make room on the stack for $ra, $s0, $s1
-	addi $sp $sp -16
+	## no parameters and no return values
+execute_tracks:
+	addi $sp $sp -12
 	sw $ra 0($sp)
 	sw $s0 4($sp)
 	sw $s1 8($sp)
-	sw $s2 12($sp)
 
-	li $s0 0     # s0 is i
-	li $s1 0     # s1 is where we read the variable length into
-	move $s2 $a0 # s2 contains the address of the track we're currently reading
-_chunk_loop:
-	bne $s1 $zero _end # go to the end if our variable length is not 0
+_track_loop:
 
-	move $a0 $s2 # a0 is the address of the variable length
-	jal decode_var_len
-	move $s1 $v0    # Put the variable length value into s1
-	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
+	lw $a0 TracksCount # a0 is the length of the list
+	lw $a1 TrackDelays # a1 is the pointer to the first element of the list
+	jal lowest_num     # v0 will be the index of the lowest number in the list
 
-	move $a0 $s2 # a0 is the address of the event
-	jal execute_event
 
-	add $s2 $s2 $v0 # Add the length of the event to the address
 
-	# execute_event returns some values into v0 that do different things. 
-	# If v0 == 0xFFFFFFFF, then that means the end of track meta event has been
-	# reached
-	li $t0 0xFFFFFFFF
-	beq $t0 $t1 _end_of_track
+	# TrackChunks is a `***Track` (Three pointers!)
+	lw $s0 TrackChunks # Load the pointer to the first track chunk into t0
+	lw $a0 0($t0)   # Dereference the pointer, now a0 is the first track in list
 
-	j _chunk_loop
+	jal execute_track_events
 
-_end:
-	# We're returning the last read variable length 
-	move $v0 $s1
-	move $v1 $s2
+	j _track_loop
 
+_track_end:
 	lw $ra 0($sp)
 	lw $s0 4($sp)
 	lw $s1 8($sp)
-	lw $s2 12($sp)
-	addi $sp $sp 16
-
+	addi $sp $sp 12
 	jr $ra
 
-
-	_end_of_track:
-	# Load s1, the value of our variable length value, to highest possible
-	# value.
-	li $s1 0x7FFFFFFF 
-	j _end
