@@ -26,6 +26,70 @@
 	
 .text
 
+################################################################################
+
+
+	## Executes all 0 length tracks events in a track chunk. Once a track event
+	## has a variable length > 0, the procedure returns the variable length
+	##
+	## a0: Address of the first track in the chunk
+	## v0: Variable length value
+	## v1: address of the variable length
+.globl execute_track_events
+execute_track_events:
+	# Make room on the stack for $ra, $s0, $s1
+	addi $sp $sp -16
+	sw $ra 0($sp)
+	sw $s0 4($sp)
+	sw $s1 8($sp)
+	sw $s2 12($sp)
+
+	li $s0 0     # s0 is i
+	li $s1 0     # s1 is where we read the variable length into
+	move $s2 $a0 # s2 contains the address of the track we're currently reading
+_chunk_loop:
+	bne $s1 $zero _end # go to the end if our variable length is not 0
+
+	move $a0 $s2 # a0 is the address of the variable length
+	jal decode_var_len
+	move $s1 $v0    # Put the variable length value into s1
+	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
+
+	move $a0 $s2 # a0 is the address of the event
+	jal execute_event
+
+	add $s2 $s2 $v0 # Add the length of the event to the address
+
+	# execute_event returns some values into v0 that do different things. 
+	# If v0 == 0xFFFFFFFF, then that means the end of track meta event has been
+	# reached
+	li $t0 0xFFFFFFFF
+	beq $t0 $t1 _end_of_track
+
+	j _chunk_loop
+
+_end:
+	# We're returning the last read variable length 
+	move $v0 $s1
+	move $v1 $s2
+
+	lw $ra 0($sp)
+	lw $s0 4($sp)
+	lw $s1 8($sp)
+	lw $s2 12($sp)
+	addi $sp $sp 16
+
+	jr $ra
+
+_end_of_track:
+	# Load s1, the value of our variable length value, to highest possible
+	# value.
+	li $s1 0x7FFFFFFF 
+	j _end
+
+################################################################################
+
+
 	## Does whatever an event is in the midi file format. Not all track events
 	## are currently supported
 	##

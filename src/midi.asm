@@ -57,7 +57,7 @@ parse_midi_file:
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Load the pointer to the first track chunk into t0
 	lw $a0 0($t0)   # Dereference the pointer, now a0 is the first track in list
-	jal track_chunk_iter
+	jal execute_track_events
 
 	# Pop the return address off the stack
 	lw $ra 0($sp)
@@ -230,13 +230,13 @@ _error:
 ################################################################################
 
 
-	## Iterates over all 0 length tracks in a track chunk. Once a track has a
-	## variable length > 0, the procedure returns the variable length
+	## Executes all 0 length tracks events in a track chunk. Once a track event
+	## has a variable length > 0, the procedure returns the variable length
 	##
 	## a0: Address of the first track in the chunk
 	## v0: Variable length value
 	## v1: address of the variable length
-track_chunk_iter:
+execute_track_events:
 	# Make room on the stack for $ra, $s0, $s1
 	addi $sp $sp -16
 	sw $ra 0($sp)
@@ -260,11 +260,18 @@ _chunk_loop:
 
 	add $s2 $s2 $v0 # Add the length of the event to the address
 
+	# execute_event returns some values into v0 that do different things. 
+	# If v0 == 0xFFFFFFFF, then that means the end of track meta event has been
+	# reached
+	li $t0 0xFFFFFFFF
+	beq $t0 $t1 _end_of_track
+
 	j _chunk_loop
 
 _end:
 	# We're returning the last read variable length 
 	move $v0 $s1
+	move $v1 $s2
 
 	lw $ra 0($sp)
 	lw $s0 4($sp)
@@ -273,3 +280,10 @@ _end:
 	addi $sp $sp 16
 
 	jr $ra
+
+
+	_end_of_track:
+	# Load s1, the value of our variable length value, to highest possible
+	# value.
+	li $s1 0x7FFFFFFF 
+	j _end
