@@ -113,14 +113,14 @@ reverse_endianness:
 lowest_num:
 	sll $a0 $a0 2 # multiply a0 by 4
 	li $v0 0      # v0 is the index of lowest number
-	lw $t0 0      # t0 is `i`
+	li $t0 0      # t0 is `i`
 
 _num_loop:
-	add $t1 $a1 $v0 # t1 = stack + index of lowest number
-	lw $t2 0($t1)   # t0 is the value of our current lowest number
+	add $t1 $a1 $v0 # t1 = list address + index of lowest number
+	lw $t2 0($t1)   # t2 is the value of our current lowest number
 
-	add $t1 $sp $t0 # t1 = stack + i
-	lw $t3 0($t1)   # t0 is the value of stack[i]
+	add $t1 $a1 $t0 # t1 = a1 + i
+	lw $t3 0($t1)   # t0 is the value of list[i]
 
 	# if t2 > t3, go to else, otherwise we set v0 = i
 	bgt $t2 $t3 _else 
