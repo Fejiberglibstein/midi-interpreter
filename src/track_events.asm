@@ -61,10 +61,10 @@ _chunk_loop:
 	add $s2 $s2 $v0 # Add the length of the event to the address
 
 	# execute_event returns some values into v0 that do different things. 
-	# If v0 == 0xFFFFFFFF, then that means the end of track meta event has been
+	# If v1 == 0xFFFFFFFF, then that means the end of track meta event has been
 	# reached
 	li $t0 0xFFFFFFFF
-	beq $t0 $t1 _end_of_track
+	beq $v1 $t0 _end_of_track
 
 	j _chunk_loop
 
