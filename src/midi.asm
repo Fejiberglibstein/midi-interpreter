@@ -276,8 +276,20 @@ _track_loop:
 	# v1 will be the address of variable length value
 	jal execute_track_events
 
-	add $t0 $s0 $v0
-	sw $v1 TrackChunks($s1) # Update the starting address to the value we got to
+
+	# update the lists using the values returned
+
+	# Update the pointer in `TrackChunks` array to point to the address we
+	# reached while iterating over the track events
+	lw $t7 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
+	add $t7 $t7 $s1 # Add the index offset to the list to get `list[idx]`
+	sw $v1 0($t7) # Update the starting address to the value we got to
+
+	# Update the value in the TrackDelays array to now be the current elapsed
+	# time + the variable length delay returned by the function
+	lw $t7 TrackDelays      # Deref the TrackDelays pointer
+	add $t7 $t7 $s1         # Add the index offset to the list to get list[idx]
+	add $t0 $s0 $v0         # t0 = current time elapsed + variable length delay
 	sw $t0 TrackDelays($s1) # Update the delay to be current time + delay
 
 	j _track_loop
