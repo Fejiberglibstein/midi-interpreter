@@ -287,10 +287,12 @@ _track_loop:
 
 	# Update the value in the TrackDelays array to now be the current elapsed
 	# time + the variable length delay returned by the function
-	lw $t7 TrackDelays      # Deref the TrackDelays pointer
-	add $t7 $t7 $s1         # Add the index offset to the list to get list[idx]
-	add $t0 $s0 $v0         # t0 = current time elapsed + variable length delay
-	sw $t0 TrackDelays($s1) # Update the delay to be current time + delay
+	lw $t7 TrackDelays       # Deref the TrackDelays pointer
+	add $t7 $t7 $s1          # Add the index offset to the list to get list[idx]
+	beq $v0 0x7FFFFFFF _else # Make sure that the variable length isnt special
+	add $v0 $v0 $s0          # v0 += current time elapsed
+_else:
+	sw $v0 0($t7) # Update the delay to be current time + delay
 
 	j _track_loop
 
