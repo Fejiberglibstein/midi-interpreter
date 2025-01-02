@@ -120,10 +120,10 @@ _num_loop:
 	lw $t2 0($t1)   # t2 is the value of our current lowest number
 
 	add $t1 $a1 $t0 # t1 = a1 + i
-	lw $t3 0($t1)   # t0 is the value of list[i]
+	lw $t3 0($t1)   # t3 is the value of list[i]
 
-	# if current value >= list[i], go to else, otherwise we set v0 = i
-	bge $t2 $t3 _else 
+	# if list[i] >= list[lowest], go to else, otherwise we set v0 = i
+	bge $t3 $t2 _else 
 	move $v0 $t0 # Set index of lowest num = i
 
 _else:
