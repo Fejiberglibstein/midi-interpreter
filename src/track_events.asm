@@ -115,8 +115,8 @@ execute_event:
 	beq $t0 $t1 meta_event 
 
 	# If the first bit is a 1, then it is a channel event
-	li $t1 0x8000000
-	and $t0 $t0 $t1
+	li $t1 0x00000080
+	and $t1 $t0 $t1
 	bne $t1 $zero midi_channel
 
 	# I DONT THINK IT WILL EVER REACH THIS
@@ -144,6 +144,7 @@ midi_channel:
 
 	srl $t1 $t0 4     # Shift 4 bits so we have the channel status bits
 	andi $t1 $t1 0x07 # Remove the fourth bit from the status bits
+	sll $t1 $t1 2     # Multiply the index by 4 (size of word)
 
 	lw $t7 jtable($t1) # Load the label that is the $t1'th element in the jtable
 	jr $t7             # Jump to the label we loaded from the jtable
