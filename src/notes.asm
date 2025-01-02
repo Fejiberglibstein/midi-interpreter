@@ -11,6 +11,7 @@
 	## 		byte instrument; 
 	## 		byte volume;    
 	##	}
+	.globl NotesArray
 	NotesArray: .word 0
 
 .text
@@ -88,4 +89,4 @@ _note_array_loop:
 _found_note:
 	sw $a0 4($t0) # Update the end time of the note
 
-	j $ra
+	jr $ra

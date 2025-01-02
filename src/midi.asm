@@ -263,7 +263,7 @@ _track_loop:
 	li $t2 0x7FFFFFFF
 	beq $t1 $t2 _track_end
 
-	addi $s0 $s0 $t1 # Update current time to be s0 + delay of track
+	add $s0 $s0 $t1 # Update current time to be s0 + delay of track
 
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
