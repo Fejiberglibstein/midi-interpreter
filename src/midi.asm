@@ -271,11 +271,12 @@ _track_loop:
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
 	add $t0 $t0 $s1 # Add the index offset to the list to get `list[idx]`
-	lw $a0 0($t0) # Dereference the pointer, now a0 is the first track in list
 
+	lw $a0 0($t0) # Dereference the pointer, now a0 is the first track in list
+	move $a1 $s0  # a1 is the current time
+	jal execute_track_events
 	# v0 will be the variable length value
 	# v1 will be the address of variable length value
-	jal execute_track_events
 
 
 	# update the lists using the values returned
