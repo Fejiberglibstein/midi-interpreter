@@ -1,10 +1,11 @@
 
 .data
 	## Pointer to the list of notes. This list will be heap allocated by
-	## repeatedly calling `sbrk`. Each note is 1 word long. The contents of a
+	## repeatedly calling `sbrk`. Each note is 2 words long. The contents of a
 	## note are as follows:
 	##	
 	##	struct note {
+	##		word start_time; // The time that this note started playing
 	## 		byte channel; // The channel number of the note
 	##		byte key;   
 	## 		byte instrument; 
@@ -16,16 +17,11 @@
 
 	## Adds a note to the list of notes
 	##
-	## $a0: Channel the note is played on
-	## $a1: key of the note to play
+	## $a0: The current time
+	## $a1: Channel the note is played on
+	## $a2: key of the note to play
 .globl add_note
 add_note:
-	addi $sp $sp -8
-	sw $s0 0($sp)
-	sw $s1 4($sp)
-
-	move $s0 $a0 # s0 is the channel the note is played on
-	move $s1 $a1 # s1 is the key of the note to play
 
 	# Allocate some space to store our note. This space is guaranteed to be next
 	# to each other in the heap due to how sbrk works. Therefore, when we
@@ -50,11 +46,13 @@ _continue:
 
 	# Store all our information on the heap using the pointer we just got from
 	# sbrk
-	sb $s1 0($v0) # Store the channel at the 5th byte
-	sb $s2 1($v0) # Store the key of the note at the 6th byte
-	sb $t1 2($v0) # Store the instrument at the 7th byte
-	sb $t2 3($v0) # Store the volume at the 7th byte
+	sw $a0 0($v0) # Store the current time at the first four bytes 
+	sb $a1 4($v0) # Store the channel at the 5th byte
+	sb $a2 5($v0) # Store the key of the note at the 6th byte
+	sb $t1 6($v0) # Store the instrument at the 7th byte
+	sb $t2 7($v0) # Store the volume at the 8th byte
 
+	jr $ra
 
 	lw $s0 0($sp)
 	lw $s1 4($sp)
