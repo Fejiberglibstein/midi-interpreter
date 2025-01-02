@@ -23,6 +23,9 @@
 	## $a2: key of the note to play
 .globl add_note
 add_note:
+	addi $sp $sp -4
+	sw $s0 0($sp)
+	move $s0 $a0
 
 	# Allocate some space to store our note. This space is guaranteed to be next
 	# to each other in the heap due to how sbrk works. Therefore, when we
@@ -47,12 +50,15 @@ _end_if:
 
 	# Store all our information on the heap using the pointer we just got from
 	# sbrk
-	sw $a0 0($v0)  # Store the current time at the first four bytes 
+	sw $s0 0($v0)  # Store the current time at the first four bytes 
 				   # We do NOT store the end time because we don't know it yet
 	sb $a1 8($v0)  # Store the channel at the 9th byte
 	sb $a2 9($v0)  # Store the key of the note at the 10th byte
 	sb $t1 10($v0) # Store the instrument at the 11th byte
 	sb $t2 11($v0) # Store the volume at the 12th byte
+
+	lw $s0 0($s0)
+	addi $sp $sp 4
 
 	jr $ra
 
