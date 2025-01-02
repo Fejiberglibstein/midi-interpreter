@@ -33,20 +33,23 @@
 	## has a variable length > 0, the procedure returns the variable length
 	##
 	## a0: Address of the first track in the chunk
+	## a1: Current time
 	## v0: Variable length value
 	## v1: address of the variable length
 .globl execute_track_events
 execute_track_events:
 	# Make room on the stack for $ra, $s0, $s1
-	addi $sp $sp -16
+	addi $sp $sp -20
 	sw $ra 0($sp)
 	sw $s0 4($sp)
 	sw $s1 8($sp)
 	sw $s2 12($sp)
+	sw $s3 16($sp)
 
 	li $s0 0     # s0 is i
 	li $s1 0     # s1 is where we read the variable length into
 	move $s2 $a0 # s2 contains the address of the track we're currently reading
+	move $s3 $a1 # s3 contains the current time
 _chunk_loop:
 	move $a0 $s2 # a0 is the address of the variable length
 	jal decode_var_len
@@ -67,6 +70,7 @@ _chunk_loop:
 	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
 
 	move $a0 $s2 # a0 is the address of the event
+	move $a1 $s3 # a1 is the current time
 	jal execute_event
 
 	add $s2 $s2 $v0 # Add the length of the event to the address
@@ -89,7 +93,8 @@ _end:
 	lw $s0 4($sp)
 	lw $s1 8($sp)
 	lw $s2 12($sp)
-	addi $sp $sp 16
+	lw $s3 16($sp)
+	addi $sp $sp 20
 
 	jr $ra
 
@@ -106,6 +111,7 @@ _end_of_track:
 	## are currently supported
 	##
 	## $a0: address of the event
+	## $a1: current time
 	## $v0: the length of this track event, this is used to offset after reading
 	##      this event
 	## $v1: Has different effects depending on its value.
@@ -119,6 +125,7 @@ execute_event:
 	sw $ra 8($sp)
 
 	move $s0 $a0 # s0 is the address of the event
+	move $a0 $a1 # We want the current time to be the first argument
 
 	li $v1 0
 	lbu $t0 0($s0)
@@ -173,8 +180,9 @@ _note_on:
 	# for volume. We'll load these two bytes and then use them to add to the end
 	# of the note array.
 
-	move $a0 $s1 # a1 is the channel number
-	lbu $a1 1($s0) # The second byte of the event is the key for `Note On` Event
+	               # a0 is already set, it is the current time
+	move $a1 $s1   # a1 is the channel number
+	lbu $a2 1($s0) # The second byte of the event is the key for `Note On` Event
 	jal add_note
 
 	li $v0 3 # The length of this message is 3 bytes
