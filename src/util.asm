@@ -25,7 +25,7 @@ _loop:
 	andi $t2 $t0 0x7F # Ignore the eighth bit of the byte
 	add $v0 $v0 $t2   # Add the 7 bits we anded to the result
 
-	andi $t2 $t0 0x8   # Get only the last bit of the byte
+	andi $t2 $t0 0x80   # Get only the last bit of the byte
 	bne $t2 $zero _loop # repeat the loop if we have a 1 at the end
 
 
