@@ -266,6 +266,7 @@ _track_loop:
 	sub $a0 $t1 $s0 # delay of track - elapsed time (a0 is delay in ms to sleep)
 	li $v0 32       # 32 is the syscall for sleep
 	syscall
+	addi $s0 $s0 $t1 # Update current time to be s0 + elapsed time
 
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)

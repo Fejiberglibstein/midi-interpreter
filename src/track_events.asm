@@ -70,6 +70,7 @@ _chunk_loop:
 	jal execute_event
 
 	add $s2 $s2 $v0 # Add the length of the event to the address
+	addi $s0 $s0 1  # i += 1
 
 	# execute_event returns some values into v0 that do different things. 
 	# If v1 == 0xFFFFFFFF, then that means the end of track meta event has been
@@ -112,9 +113,10 @@ _end_of_track:
 	##	- 0xFFFFFF: End of track
 execute_event:
 
-	addi $sp $sp -8
+	addi $sp $sp -12
 	sw $s0 0($sp)
 	sw $s1 4($sp)
+	sw $ra 8($sp)
 
 	move $s0 $a0 # s0 is the address of the event
 
@@ -205,7 +207,8 @@ _pitch_wheel_change:
 end:
 	lw $s0 0($sp)
 	lw $s1 4($sp)
-	addi $sp $sp 8
+	lw $ra 8($sp)
+	addi $sp $sp 12
 
 	jr $ra
 
