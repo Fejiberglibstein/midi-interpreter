@@ -123,10 +123,10 @@ _num_loop:
 	lw $t3 0($t1)   # t3 is the value of list[i]
 
 	# if list[i] >= list[lowest], go to else, otherwise we set v0 = i
-	bge $t3 $t2 _else 
+	bge $t3 $t2 _end_if 
 	move $v0 $t0 # Set index of lowest num = i
 
-_else:
+_end_if:
 
 	addi $t0 $t0 4
 	bne $t0 $a0 _num_loop
