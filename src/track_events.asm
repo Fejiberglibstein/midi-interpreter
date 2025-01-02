@@ -169,7 +169,12 @@ midi_channel:
 	lw $t7 jtable($t1) # Load the label that is the $t1'th element in the jtable
 	jr $t7             # Jump to the label we loaded from the jtable
 
-_note_off:
+_note_off: # When a note is released (ended)
+	               # a0 is already set, it is the current time
+	move $a1 $s1   # a1 is the channel number
+	lbu $a2 1($s0) # The second byte of the event is the key for Note Off Event
+	jal end_note
+
 	li $v0 3 # The length of this message is 3 bytes
 	j end
 
