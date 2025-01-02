@@ -57,4 +57,35 @@ _end_if:
 
 ################################################################################
 
-	jr $ra
+	## Will play a note given the channel and key. This will be called when the
+	## channel voice message is `note_off`.
+	##
+	## $a0: Current time
+	## $a1: channel
+	## $a2: key
+.globl end_note
+end_note:
+	lw $t0 NotesArray # t0 is the base address of the array
+
+_note_array_loop:
+	lb $t1 8($t0) # Get the channel from the note
+	lb $t2 9($t0) # Get the key from the note
+	lw $t3 4($t0) # Get the end time from the note
+
+	# We need to check if both the channels and the keys are equal and that the
+	# end_time has not been set yet:
+	# if (note.channel == channel && note.key == key && note.end_time == 0)
+	seq $t1 $t1 $a1   # Check if the channels are equal
+	seq $t2 $t2 $a2   # Check if the keys are equal
+	sne $t3 $t3 $zero # Check if the end time is not zero
+	and $t1 $t1 $t2 # And the first two conditions
+	and $t1 $t1 $t3 # And the first two conditions and the third condition
+	bne $t1 $zero _found_note
+
+	addi $t0 $t0 12 # go to the next note in the array
+	j _note_array_loop
+
+_found_note:
+	sw $a0 4($t0) # Update the end time of the note
+
+	j $ra
