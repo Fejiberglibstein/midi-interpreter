@@ -48,11 +48,22 @@ execute_track_events:
 	li $s1 0     # s1 is where we read the variable length into
 	move $s2 $a0 # s2 contains the address of the track we're currently reading
 _chunk_loop:
-	bne $s1 $zero _end # go to the end if our variable length is not 0
-
 	move $a0 $s2 # a0 is the address of the variable length
 	jal decode_var_len
-	move $s1 $v0    # Put the variable length value into s1
+
+	move $s1 $v0       # Put the variable length value into s1
+
+	# if (var_length != 0 && i != 0) means we need to exit the loop. 
+	#
+	# We need to check if i != 0 because we stop looping on a non-zero
+	# variable length so when we iterate over the chunk again later we don't
+	# want to stop on the same track event, so we ignore the variable length
+	# when i == 0
+	sne $t0 $s1 $zero  # var_length != 0
+	sne $t1 $s0 $zero  # i != 0
+	and $t0 $t0 $t1    # (var_length != 0 && i != 0)
+	bne $t0 $zero _end # go to the end if this condition == 1
+
 	add $s2 $s2 $v1 # Add the length of the var. len. to the address we read
 
 	move $a0 $s2 # a0 is the address of the event
