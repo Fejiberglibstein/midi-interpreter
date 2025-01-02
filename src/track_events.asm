@@ -14,6 +14,11 @@
 .data
 	## Allocate region for 16 channels. Each channel is 2 bytes, one byte for
 	## instrument, and one byte for volume
+	##
+	##	struct channel {
+	##		byte instrument
+	##		byte volume
+	##	}
 	.align 2
 	.globl Channels
 	Channels: .space 32 # 2 bytes * 16 channels
@@ -188,10 +193,26 @@ _note_on: # When a note is depressed (start)
 	j end
 
 _ctrl_change: # When a controller value changes. We only care about volume
+	lbu $t0 1($s0) # The second byte of the event is the controller number
+	lbu $t1 2($s0) # The third byte is the value to set controller to
+
+	# 0x07 is the controller number for channel for volume. We can ignore all
+	# controller numbers besides volume.
+	bne $t0 0x07 _ctrl_change_end_if 
+
+	sll $t3 $s1 1          # Multiply channel number by 2
+	sb $t1 Channels+1($t3) # Set the volume of the channel in channels array
+
+_ctrl_change_end_if:
 	li $v0 3 # The length of this message is 3 bytes
 	j end
 
 _program_change: # When the patch (instrument) number changes
+	lbu $t0 1($s0) # The second byte of the event is the instrument
+
+	sll $t3 $s1 1        # Multiply channel number by 2
+	sb $t0 Channels($t3) # Set the instrument of the channel in channels array
+
 	li $v0 2 # The length of this message is 2 bytes
 
 	j end
