@@ -58,6 +58,8 @@ parse_midi_file:
 	# Iterate over all the tracks
 	jal execute_tracks
 
+	jal play_song
+
 	# Pop the return address off the stack
 	lw $ra 0($sp)
 	addi $sp $sp 4
@@ -298,5 +300,42 @@ _track_end:
 	lw $s0 4($sp)
 	lw $s1 8($sp)
 	addi $sp $sp 12
+	jr $ra
+
+
+	## Will play a song from the pointer stored in `NotesArray`.
+	##
+	## No parameters
+play_song:
+	lw $s0 NotesArray # t0 is the current note we're on
+	li $s1 0 # t1 is the current time
+
+
+_song_loop:
+	# Read from the note
+	lw $t0 0($s0)  # Start time of note
+	lw $t1 4($s0)  # End time of note
+
+	# if there is no end time of the note, we're at the end
+	beq $t1 $zero _song_end 
+
+	lb $a0 9($s0)   # a0 is the key
+	sub $a1 $t1 $t0 # a1 is duration = end time - start time
+	lb $a2 10($s0)  # a2 is the instrument
+	lb $a3 11($s0)  # a3 is the volume
+	li $v0 31       # 31 is for MIDI out
+	syscall
+
+	sub $a0 $t0 $s1 # a1 is the time to sleep, start time - current time
+	li $v0 32       # 32 is for sleep
+	syscall
+
+	add $s1 $s1 $a0
+
+	addi $s0 $s0 12 # Size of a note is 12 bytes
+
+	j _song_loop
+
+_song_end:
 	jr $ra
 
