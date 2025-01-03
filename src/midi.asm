@@ -319,6 +319,15 @@ _song_loop:
 	# if there is no end time of the note, we're at the end
 	beq $t1 $zero _song_end 
 
+	# Sleep before playing the note
+	sub $a0 $t0 $s1 # a1 is the time to sleep, start time - current time
+	beq $a0 $zero _endif
+	li $v0 32       # 32 is for sleep
+	syscall
+_endif:
+
+
+	# Play the note
 	lb $a0 9($s0)   # a0 is the key
 	sub $a1 $t1 $t0 # a1 is duration = end time - start time
 	lb $a2 10($s0)  # a2 is the instrument
@@ -326,11 +335,7 @@ _song_loop:
 	li $v0 31       # 31 is for MIDI out
 	syscall
 
-	sub $a0 $t0 $s1 # a1 is the time to sleep, start time - current time
-	li $v0 32       # 32 is for sleep
-	syscall
-
-	add $s1 $s1 $a0
+	move $s1 $t0
 
 	addi $s0 $s0 12 # Size of a note is 12 bytes
 
