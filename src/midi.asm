@@ -273,8 +273,6 @@ _track_loop:
 	# v0 will be the variable length value
 	# v1 will be the address of variable length value
 
-	add $s0 $s0 $v0 # Update current time to be s0 + variable length delay value
-
 	# update the lists using the values returned
 
 	# Update the pointer in `TrackChunks` array to point to the address we
@@ -289,6 +287,7 @@ _track_loop:
 	add $t7 $t7 $s1          # Add the index offset to the list to get list[idx]
 	beq $v0 0x7FFFFFFF endif # Make sure that the variable length isnt special
 	add $v0 $v0 $s0          # v0 += current time elapsed
+	move $s0 $v0
 endif:
 	sw $v0 0($t7) # Update the delay to be current time + delay
 
