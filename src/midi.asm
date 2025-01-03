@@ -263,8 +263,6 @@ _track_loop:
 	li $t2 0x7FFFFFFF
 	beq $t1 $t2 _track_end
 
-	add $s0 $s0 $t1 # Update current time to be s0 + delay of track
-
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
 	add $t0 $t0 $s1 # Add the index offset to the list to get `list[idx]`
@@ -275,6 +273,7 @@ _track_loop:
 	# v0 will be the variable length value
 	# v1 will be the address of variable length value
 
+	add $s0 $s0 $v0 # Update current time to be s0 + variable length delay value
 
 	# update the lists using the values returned
 

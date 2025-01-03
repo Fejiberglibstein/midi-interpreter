@@ -57,7 +57,7 @@ _end_if:
 	sb $t1 10($v0) # Store the instrument at the 11th byte
 	sb $t2 11($v0) # Store the volume at the 12th byte
 
-	lw $s0 0($s0)
+	lw $s0 0($sp)
 	addi $sp $sp 4
 
 	jr $ra
@@ -84,7 +84,7 @@ _note_array_loop:
 	# if (note.channel == channel && note.key == key && note.end_time == 0)
 	seq $t1 $t1 $a1   # Check if the channels are equal
 	seq $t2 $t2 $a2   # Check if the keys are equal
-	sne $t3 $t3 $zero # Check if the end time is not zero
+	seq $t3 $t3 $zero # Check if the end time is not zero
 	and $t1 $t1 $t2 # And the first two conditions
 	and $t1 $t1 $t3 # And the first two conditions and the third condition
 	bne $t1 $zero _found_note
