@@ -28,6 +28,14 @@
 	## These are ordered as they are in [this](http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html#BMA1_1)
 	.align 2
 	jtable: .word _note_off, _note_on, _key_pressure, _ctrl_change, _program_change, _channel_pressure, _pitch_wheel_change
+
+	## In a midi file, a running status (event number) can be used if the
+	## previous event is the same. So, we must store the last event that was
+	## executed in this case
+	RunningStatus: .word 0
+	## Also use the last channel for the running status
+	LastChannel: .word 0
+	
 	
 .text
 
@@ -124,13 +132,15 @@ _end_of_track:
 	##	- 0xFFFFFF: End of track
 execute_event:
 
-	addi $sp $sp -12
+	addi $sp $sp -16
 	sw $s0 0($sp)
 	sw $s1 4($sp)
 	sw $ra 8($sp)
+	sw $s2 12($sp)
 
 	move $s0 $a0 # s0 is the address of the event
 	move $a0 $a1 # We want the current time to be the first argument
+	li $s2 0     # s2 will be a fix for running status offset
 
 	li $v1 0
 	lbu $t0 0($s0)
@@ -144,11 +154,12 @@ execute_event:
 	and $t1 $t0 $t1
 	bne $t1 $zero midi_channel
 
-	# I DONT THINK IT WILL EVER REACH THIS
-	# else, if the first bit is a 0, it is a controller event
-
-	lw $a0 BadEvent
-	j exit_with_error
+	# If the first bit is a 0, then we must use the running status event
+	addi $s0 $s0 -1 # shift the address back one so that its not unaligned
+	li $s2 -1       # give the offset fix a value of negative one
+	lw $t7 RunningStatus
+	lw $s1 LastChannel
+	jr $t7
 
 meta_event:
 	lbu $t0 2($s0)  # This is the length of the meta message
@@ -172,6 +183,8 @@ midi_channel:
 	sll $t1 $t1 2     # Multiply the index by 4 (size of word)
 
 	lw $t7 jtable($t1) # Load the label that is the $t1'th element in the jtable
+	sw $t7 RunningStatus # Store the jump as the running status (last event run)
+	sw $s1 LastChannel   # Also store the current channel as the running channel
 	jr $t7             # Jump to the label we loaded from the jtable
 
 _note_off: # When a note is released (ended)
@@ -231,9 +244,13 @@ _pitch_wheel_change: # We can just ignore this message :troll:
 
 
 end:
+	# offset the length of the message if we had a running status
+	add $v0 $v0 $s2 
+
 	lw $s0 0($sp)
 	lw $s1 4($sp)
 	lw $ra 8($sp)
-	addi $sp $sp 12
+	lw $s2 12($sp)
+	addi $sp $sp 16
 
 	jr $ra
