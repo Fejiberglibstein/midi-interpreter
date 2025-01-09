@@ -280,15 +280,15 @@ _track_loop:
 	li $t2 0x7FFFFFFF
 	beq $t1 $t2 _track_end
 
-	# We need to update `RunningStatus` and `RunningChannel` to be the values
+	# We need to update `RunningStatus` and `LastChannel` to be the values
 	# from the list `RunningStatusList`. We need the index to be multiplied by 2
 	# since RunningStatusList is a list of double words, not normal words like
 	# TrackDelays and TracksCount
 	sll $t1 $s1 1   # Multiply the index by 2 since RunningStatusList is a dword
 	lw $t0 RunningStatusList($t1)   # Get the RunningStatus from the list
 	sw $t0 RunningStatus            # Update the RunningStatus
-	lw $t0 RunningStatusList+4($t1) # Get the RunningChannel from the list
-	sw $t0 RunningChannel           # Update the RunningChannel
+	lw $t0 RunningStatusList+4($t1) # Get the LastChannel from the list
+	sw $t0 LastChannel              # Update the LastChannel
 
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
@@ -301,14 +301,14 @@ _track_loop:
 	# v1 will be the address of variable length value
 
 	# We need to update our `RunningStatusList` list to have the new values of
-	# `RunningStatus` and `RunningChannel` since they change when we call
+	# `RunningStatus` and `LastChannel` since they change when we call
 	# `execute_track_events`. So, we can do the same process as before but
 	# instead load the values instead of storing them
 	sll $t1 $s1 1   # Multiply the index by 2 since RunningStatusList is a dword
 	lw $t0 RunningStatus            # Get the RunningStatus
 	sw $t0 RunningStatusList($t1)   # Update the RunningStatus in the list
-	lw $t0 RunningChannel           # Get the RunningChannel
-	sw $t0 RunningStatusList+4($t1) # Update the RunningChannel in the list
+	lw $t0 LastChannel              # Get the LastChannel
+	sw $t0 RunningStatusList+4($t1) # Update the LastChannel in the list
 
 	# update the lists using the values returned
 
