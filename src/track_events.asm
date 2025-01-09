@@ -27,7 +27,7 @@
 	## Create a jump table for all the different channel messages there are.
 	## These are ordered as they are in [this](http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html#BMA1_1)
 	.align 2
-	jtable: .word _note_off, _note_on, _key_pressure, _ctrl_change, _program_change, _channel_pressure, _pitch_wheel_change
+	jtable: .word _note_off, _note_on, _key_pressure, _ctrl_change, _program_change, _channel_pressure, _pitch_wheel_change, _sys_ex
 
 	## In a midi file, a running status (event number) can be used if the
 	## previous event is the same. So, we must store the last event that was
@@ -244,6 +244,21 @@ _pitch_wheel_change: # We can just ignore this message :troll:
 	li $v0 3 # The length of this message is 3 bytes
 	j end
 
+	# System exclusive message, this needs to be handled since it has a variable
+	# length
+_sys_ex:
+	# System exclusive messages are a series of bytes, delimited by 
+	# `11110111` = `F7`. We can read all the bytes until we get to this byte and
+	# then return the amount of bytes read.
+	li $v0 1 # initial length is just 1 byte, then we read until `F7`
+_sys_ex_loop:
+	add $t0 $s0 $v0 # Get the byte with an offset of the total bytes we've read
+	# Offset the index we're checking by -1 so that our total isn't off by 1
+	lbu $t0 -1($t0) 
+	beq $t0 0xF7 end
+
+	add $v0 $v0 1
+	j _sys_ex_loop
 
 end:
 	# offset the length of the message if we had a running status
