@@ -284,11 +284,13 @@ _track_loop:
 	# from the list `RunningStatusList`. We need the index to be multiplied by 2
 	# since RunningStatusList is a list of double words, not normal words like
 	# TrackDelays and TracksCount
-	sll $t1 $s1 1   # Multiply the index by 2 since RunningStatusList is a dword
-	lw $t0 RunningStatusList($t1)   # Get the RunningStatus from the list
-	sw $t0 RunningStatus            # Update the RunningStatus
-	lw $t0 RunningStatusList+4($t1) # Get the LastChannel from the list
-	sw $t0 LastChannel              # Update the LastChannel
+	lw $t0 RunningStatusList # Deref the pointer
+	sll $t1 $s1 1 # Multiply the index by 2 since RunningStatusList is a dword
+	add $t0 $t0 $t1      # index + pointer
+	lw $t1 0($t0)        # RunningStatusList[i].RunningStatus
+	sw $t1 RunningStatus # Update the RunningStatus
+	lw $t1 4($t0)        # RunningStatusList[i].LastChannel
+	sw $t1 LastChannel   # Update the LastChannel
 
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
@@ -304,11 +306,13 @@ _track_loop:
 	# `RunningStatus` and `LastChannel` since they change when we call
 	# `execute_track_events`. So, we can do the same process as before but
 	# instead load the values instead of storing them
-	sll $t1 $s1 1   # Multiply the index by 2 since RunningStatusList is a dword
-	lw $t0 RunningStatus            # Get the RunningStatus
-	sw $t0 RunningStatusList($t1)   # Update the RunningStatus in the list
-	lw $t0 LastChannel              # Get the LastChannel
-	sw $t0 RunningStatusList+4($t1) # Update the LastChannel in the list
+	lw $t0 RunningStatusList # Deref the pointer
+	sll $t1 $s1 1 # Multiply the index by 2 since RunningStatusList is a dword
+	add $t0 $t0 $t1      # index + pointer
+	lw $t1 RunningStatus # Get the RunningStatus
+	sw $t1 0($t0)        # RunningStatusList[i].RunningStatus = RunningStatus
+	lw $t1 LastChannel   # Get the LastChannel
+	sw $t1 4($t0)        # RunningStatusList[i].LastChannel = LastChannel
 
 	# update the lists using the values returned
 
