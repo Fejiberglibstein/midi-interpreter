@@ -19,7 +19,7 @@
 	## Pointer to the region of memory where we allocated the list of running
 	## status/running channels for each track
 	.align 2
-	RunningPtr: .word 0
+	RunningStatusList: .word 0
 
 
 	## The amount of tracks we have allocated
@@ -163,7 +163,7 @@ allocate_tracks:
 	sll $a0 $s0 3 # a0 is the number of bytes to allocate: 8 * number of tracks
 	li $v0 9      # 9 is syscall for sbrk
 	syscall
-	sw $v0 RunningPtr
+	sw $v0 RunningStatusList
 
 
 	# Now we can loop through all the track chunks in the file. 
@@ -280,6 +280,16 @@ _track_loop:
 	li $t2 0x7FFFFFFF
 	beq $t1 $t2 _track_end
 
+	# We need to update `RunningStatus` and `RunningChannel` to be the values
+	# from the list `RunningStatusList`. We need the index to be multiplied by 2
+	# since RunningStatusList is a list of double words, not normal words like
+	# TrackDelays and TracksCount
+	sll $t1 $s1 1   # Multiply the index by 2 since RunningStatusList is a dword
+	lw $t0 RunningStatusList($t1)   # Get the RunningStatus from the list
+	sw $t0 RunningStatus            # Update the RunningStatus
+	lw $t0 RunningStatusList+4($t1) # Get the RunningChannel from the list
+	sw $t0 RunningChannel           # Update the RunningChannel
+
 	# TrackChunks is a `***Track` (Three pointers!)
 	lw $t0 TrackChunks # Deref TrackChunks (now it points to an array of chunks)
 	add $t0 $t0 $s1 # Add the index offset to the list to get `list[idx]`
@@ -289,6 +299,16 @@ _track_loop:
 	jal execute_track_events
 	# v0 will be the variable length value
 	# v1 will be the address of variable length value
+
+	# We need to update our `RunningStatusList` list to have the new values of
+	# `RunningStatus` and `RunningChannel` since they change when we call
+	# `execute_track_events`. So, we can do the same process as before but
+	# instead load the values instead of storing them
+	sll $t1 $s1 1   # Multiply the index by 2 since RunningStatusList is a dword
+	lw $t0 RunningStatus            # Get the RunningStatus
+	sw $t0 RunningStatusList($t1)   # Update the RunningStatus in the list
+	lw $t0 RunningChannel           # Get the RunningChannel
+	sw $t0 RunningStatusList+4($t1) # Update the RunningChannel in the list
 
 	# update the lists using the values returned
 
