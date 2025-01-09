@@ -31,9 +31,15 @@
 
 	## In a midi file, a running status (event number) can be used if the
 	## previous event is the same. So, we must store the last event that was
-	## executed in this case
+	## executed.
+	##
+	## This value is a pointer to where the actual Running Status is located.
+	.globl RunningStatus
 	RunningStatus: .word 0
 	## Also use the last channel for the running status
+	##
+	## This value is a pointer to where the actual Running Status is located.
+	.globl LastChannel
 	LastChannel: .word 0
 	
 	

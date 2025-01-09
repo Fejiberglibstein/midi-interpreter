@@ -16,6 +16,12 @@
 	.align 2
 	TrackDelays: .word 0
 
+	## Pointer to the region of memory where we allocated the list of running
+	## status/running channels for each track
+	.align 2
+	RunningPtr: .word 0
+
+
 	## The amount of tracks we have allocated
 	.align 2 
 	TracksCount: .word 0
@@ -136,7 +142,7 @@ allocate_tracks:
 	#
 	# We have `$a0` amount of tracks, each pointer is 4 bytes, so we need to
 	# multiply by 4 and then call sbrk to allocate system memory
-	sll $a0 $a0 2 # a0: number of bytes to allocate (4 * a0)
+	sll $a0 $s0 2 # a0: number of bytes to allocate (4 * a0)
 	li $v0 9      # 9 is syscall for sbrk
 	syscall
 	move $s2 $v0 # Move the pointer to the allocated space into s2
@@ -149,6 +155,15 @@ allocate_tracks:
 	li $v0 9 # 9 is syscall for sbrk
 	syscall
 	sw $v0 TrackDelays
+
+	# We also want to make room for the running status and running channel data
+	# (see track_events.asm). We need to store a word for the running status and
+	# a byte for the running channel, so it's easiest to just make each of these
+	# a double word so we don't need to worry about alignment.
+	sll $a0 $s0 3 # a0 is the number of bytes to allocate: 8 * number of tracks
+	li $v0 9      # 9 is syscall for sbrk
+	syscall
+	sw $v0 RunningPtr
 
 
 	# Now we can loop through all the track chunks in the file. 
