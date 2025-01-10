@@ -46,6 +46,7 @@ add_note:
 
 	# initialize the array if t0 == zero (NULL)
 	sw $v0 NotesArray # v0 is the output we just got from the sbrk syscall
+	sw $v0 NotesStartPtr 
 
 _end_if:
 	sll $t0 $s1 1          # Multiply channel num by 2 to align to Channels
@@ -76,10 +77,11 @@ _end_if:
 	## $a2: key
 .globl end_note
 end_note:
-	addi $sp $sp -4
+	addi $sp $sp -8
 	sw $s0 0($sp)
+	sw $s1 4($sp)
 
-	lw $t0 NotesArray # t0 is the base address of the array
+	lw $t0 NotesStartPtr # t0 is the address of the array we start at
 	addi $t0 $t0 -12 # Subtract 12 from t0 since we add 12 at start of loop
 
 	# put the channel and key inside t1 in the correct byte order,
@@ -88,12 +90,23 @@ end_note:
 	sll $t2 $a2 8  # Shift the key 1 byte over
 	or $t1 $t1 $t2 # Combine the 2 registers into one
 
+	# Variables for making NotesStartPtr used
+	li $s0 1 
+
 _note_array_loop:
 	addi $t0 $t0 12 # go to the next note in the array
 
 	lw $t2 4($t0) # Get the end time from the note
 	bne $t2 $zero _note_array_loop # If the time is not zero, continue
 
+	# if we haven't already updated it, we can update the NotesStartPtr to be
+	# the current address
+	beq $s0 $zero _end_note_if
+
+	li $s0 0
+	sw $t0 NotesStartPtr
+
+_end_note_if:
 	lhu $t2 8($t0) # Get the channel and key
 	bne $t2 $t1 _note_array_loop # If the channel & key dont match, continue
 
@@ -102,6 +115,7 @@ _note_array_loop:
 _found_note:
 	sw $a0 4($t0) # Update the end time of the note
 
-	addi $sp $sp 4
+	addi $sp $sp 8
 	lw $s0 0($sp)
+	lw $s1 4($sp)
 	jr $ra
