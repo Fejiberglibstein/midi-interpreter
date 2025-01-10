@@ -278,7 +278,7 @@ execute_tracks:
 	sw $s0 4($sp)
 	sw $s1 8($sp)
 
-	li $s0 0 # s0 is the time that has elapsed since starting
+	li $s0 0 # s0 is the time that has elapsed on the track
 
 _track_loop:
 
@@ -289,14 +289,14 @@ _track_loop:
 
 	lw $t0 TrackDelays # Deref the TrackDelays pointer
 	add $t0 $t0 $s1    # Add the index to the pointer
-	lw $t1 0($t0)      # Get the delay at the index
+	lw $s0 0($t0)      # Get the elapsed time at the index
 
 	# When a track has reached the `2F` (track end) meta event, then we set the
 	# track delay to 0x7FFFFFFF. If the lowest value in the TrackDelays list is
 	# this value, it means all the tracks have reached their end and we can
 	# finish iterating over the tracks
 	li $t2 0x7FFFFFFF
-	beq $t1 $t2 _track_end
+	beq $s0 $t2 _track_end
 
 	# We need to update `RunningStatus` and `LastChannel` to be the values
 	# from the list `RunningStatusList`. We need the index to be multiplied by 2
@@ -346,7 +346,7 @@ _track_loop:
 	add $t7 $t7 $s1          # Add the index offset to the list to get list[idx]
 	beq $v0 0x7FFFFFFF endif # Make sure that the variable length isnt special
 	add $v0 $v0 $s0          # v0 += current time elapsed
-	move $s0 $v0
+
 endif:
 	sw $v0 0($t7) # Update the delay to be current time + delay
 
