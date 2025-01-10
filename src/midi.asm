@@ -60,31 +60,27 @@ parse_midi_file:
 	move $a1 $s7 # Put the file descriptor into a1
 	jal allocate_tracks
 
+	# For benchmarking purposes
 	li $v0 30  # 30 is for getting the system time
 	syscall 
-	# a0: high order 32 bits
-	# a1: low order 32 bits
-	move $a0 $a0
-	li $v0 34 # 34 is for printing integers as hex
-	syscall 
+	move $s0 $a0 # fsr this syscall puts the output into a0 instead of v0
 
 	# Iterate over all the tracks
 	jal execute_tracks
 
-	.data
-	Minus: .asciiz " - "
-	.text
-	la $a0 Minus
-	li $v0 4 # 4 is for printing strings
-	syscall
-
+	# For benchmarking purposes
 	li $v0 30  # 30 is for getting the system time
 	syscall 
-	# a0: high order 32 bits
-	# a1: low order 32 bits
-	move $a0 $a0
-	li $v0 34 # 34 is for printing integers as hex
-	syscall 
+	sub $t0 $a0 $s0 # get total time elapsed
+	move $a0 $t0 # a0 is the integer to print out
+	li $v0 1 # 1 is for printing integers
+	syscall # Print out elapsed time in ms
+	.data
+	String: .asciiz "ms elapsed\n"
+	.text
+	la $a0 String
+	li $v0 4 # 4 is for printing strings
+	syscall
 
 	jal play_song
 
