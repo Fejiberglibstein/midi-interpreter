@@ -199,6 +199,12 @@ _note_off: # When a note is released (ended)
 	j end
 
 _note_on: # When a note is depressed (start)
+
+	# If the velocity is 0, this can be treated as a note off event instead of a
+	# note on event.
+	lbu $t0 2($s0) # The third byte of the event is the velocity
+	beq $t0 0x00 _note_off
+
 	               # a0 is already set, it is the current time
 	move $a1 $s1   # a1 is the channel number
 	lbu $a2 1($s0) # The second byte of the event is the key for Note On Event
