@@ -14,6 +14,10 @@
 	.globl NotesArray
 	NotesArray: .word 0
 
+	## Store the pointer to the first non-completed note in the song, this will
+	## speed up the song so it doesn't have to check every single note
+	NotesStartPtr: .word 0
+
 .text
 
 	## Adds a note to the list of notes
@@ -72,27 +76,32 @@ _end_if:
 	## $a2: key
 .globl end_note
 end_note:
+	addi $sp $sp -4
+	sw $s0 0($sp)
+
 	lw $t0 NotesArray # t0 is the base address of the array
+	addi $t0 $t0 -12 # Subtract 12 from t0 since we add 12 at start of loop
+
+	# put the channel and key inside t1 in the correct byte order,
+	# as `0x0000[KEY][CHANNEL]`
+	move $t1 $a1   # Store the channel in first byte of t1
+	sll $t2 $a2 8  # Shift the key 1 byte over
+	or $t1 $t1 $t2 # Combine the 2 registers into one
 
 _note_array_loop:
-	lb $t1 8($t0) # Get the channel from the note
-	lb $t2 9($t0) # Get the key from the note
-	lw $t3 4($t0) # Get the end time from the note
-
-	# We need to check if both the channels and the keys are equal and that the
-	# end_time has not been set yet:
-	# if (note.channel == channel && note.key == key && note.end_time == 0)
-	seq $t1 $t1 $a1   # Check if the channels are equal
-	seq $t2 $t2 $a2   # Check if the keys are equal
-	seq $t3 $t3 $zero # Check if the end time is not zero
-	and $t1 $t1 $t2 # And the first two conditions
-	and $t1 $t1 $t3 # And the first two conditions and the third condition
-	bne $t1 $zero _found_note
-
 	addi $t0 $t0 12 # go to the next note in the array
-	j _note_array_loop
 
+	lw $t2 4($t0) # Get the end time from the note
+	bne $t2 $zero _note_array_loop # If the time is not zero, continue
+
+	lhu $t2 8($t0) # Get the channel and key
+	bne $t2 $t1 _note_array_loop # If the channel & key dont match, continue
+
+	# If we didn't have to continue in the loop, we know we found the correct
+	# note
 _found_note:
 	sw $a0 4($t0) # Update the end time of the note
 
+	addi $sp $sp 4
+	lw $s0 0($sp)
 	jr $ra
