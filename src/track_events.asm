@@ -217,9 +217,9 @@ meta_event:
 	or $t0 $t0 $t1
 
 	# Convert the tempo into floating point
-	mtc1 $t0 $f8    # move to fp register
-	cvt.s.w $f8 $f8 # Convert from integer to fp
-	s.s $f8 MicroSecsPerQuarterNote
+	mtc1 $t0 $f2    # move to fp register
+	cvt.s.w $f2 $f2 # Convert from integer to fp
+	s.s $f2 MicroSecsPerQuarterNote
 
 	j end
 
