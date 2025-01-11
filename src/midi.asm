@@ -21,10 +21,14 @@
 	.align 2
 	RunningStatusList: .word 0
 
-
 	## The amount of tracks we have allocated
 	.align 2 
 	TracksCount: .word 0
+
+	## Used to calculate the time delay in milliseconds, read from the header
+	## chunk
+	.align 2
+	TicksPerQuarterNote: .word 0
 
 .text
 .globl parse_midi_file
@@ -126,6 +130,15 @@ validate_header:
 	# Get the `ntrks` part of the header, this is the amount of tracks inside
 	# the file
 	lh $v0 8($s0) # Get the ntrks from the chunks
+
+	# Get the `division` part of the header, this is the ticks per quarter note
+	lh $t0 14($s0)
+	# Make sure the last bit is a 0
+	andi $t1 $t0 0x8000
+	la $a0 NoSmpte
+	bne $t1 $zero exit_with_error
+
+	sw $t0 TicksPerQuarterNote
 
 	# Reset stack pointer
 	lw $s0 0($sp)

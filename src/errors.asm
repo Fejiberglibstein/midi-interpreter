@@ -18,6 +18,9 @@
 	.globl BadEvent
 	.align 2
 	BadEvent: .asciiz "This should not happen"
+	.globl NoSmpte
+	.align 2
+	NoSmpte: .asciiz "Files with the SMPTE format are not supported"
 
 .text
 	## Exit and print out an error

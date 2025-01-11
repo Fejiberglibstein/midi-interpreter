@@ -38,7 +38,17 @@
 	.globl LastChannel
 	LastChannel: .word 0
 	
-	
+	## Used to calculate the time delay in milliseconds, read from the header
+	## chunk
+	.align 2
+	.globl TicksPerQuarterNote
+	TicksPerQuarterNote: .word 0
+	## Used to calculate the time delay in milliseconds, read from the meta
+	## event for tempo. (tempo is defined as micro seconds per quarter note)
+	.align 2
+	.globl MicroSecsPerQuarterNote
+	MicroSecsPerQuarterNote: .word 0
+
 .text
 
 ################################################################################
@@ -65,11 +75,30 @@ execute_track_events:
 	li $s1 0     # s1 is where we read the variable length into
 	move $s2 $a0 # s2 contains the address of the track we're currently reading
 	move $s3 $a1 # s3 contains the current time
+
+	l.s $f0 TicksPerQuarterNote
+	cvt.s.w $f0 $f0 # f0 is the Ticks / QuarterNote
+	l.s $f2 MicroSecsPerQuarterNote
+	cvt.s.w $f2 $f2 # f2 is the MicroSecs / QuarterNote
+	.data 
+	_1000: .float 1000
+	.text
+	l.s $f3 _1000 # f3 contains the value 1000
+
 _chunk_loop:
 	move $a0 $s2 # a0 is the address of the variable length
 	jal decode_var_len
 
-	move $s1 $v0       # Put the variable length value into s1
+	# Convert ticks from reading the variable length into milliseconds.
+	# This can be done by doing 
+	# Ticks / TicksPerQuarterNote * MicroSecsPerQuarterNote * 1000
+	mtc1 $v0 $f4      # Move variable length into to fp register
+	cvt.s.w $f4 $f4   # Convert from integer to floating point, f4 is `Ticks`
+	div.s $f1 $f4 $f0 # Ticks / TicksPerQuarterNote           -> QuarterNote
+	mul.s $f1 $f1 $f2 # QuarterNote * MicroSecsPerQuarterNote -> Microseconds
+	mul.s $f1 $f1 $f3 # Microseconds * 1000                   -> Milliseconds
+	cvt.w.s $f1 $f1   # Convert from floating point to integer
+	mfc1 $s1 $f1 # Put the calculated delay in milliseconds into s1
 
 	# if (var_length != 0 && i != 0) means we need to exit the loop. 
 	#
