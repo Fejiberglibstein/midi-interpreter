@@ -102,8 +102,6 @@ _chunk_loop:
 	cvt.w.s $f1 $f1   # Convert from floating point to integer
 	mfc1 $s1 $f1 # Put the calculated delay in milliseconds into s1
 
-	# move $s1 $v0
-
 	# if (var_length != 0 && i != 0) means we need to exit the loop. 
 	#
 	# We need to check if i != 0 because we stop looping on a non-zero
