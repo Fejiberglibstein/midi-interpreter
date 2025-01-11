@@ -315,8 +315,7 @@ _track_loop:
 	# track delay to 0x7FFFFFFF. If the lowest value in the TrackDelays list is
 	# this value, it means all the tracks have reached their end and we can
 	# finish iterating over the tracks
-	li $t2 0x7FFFFFFF
-	beq $s0 $t2 _track_end
+	beq $s0 0x7FFFFFFF _track_end
 
 	# We need to update `RunningStatus` and `LastChannel` to be the values
 	# from the list `RunningStatusList`. We need the index to be multiplied by 2

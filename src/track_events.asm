@@ -91,6 +91,8 @@ _chunk_loop:
 	move $a0 $s2 # a0 is the address of the variable length
 	jal decode_var_len
 
+	# Skip over all this math if the variable length is a 0
+	beq $v0 $zero _end_calc
 	# Convert ticks from reading the variable length into milliseconds.
 	# This can be done by doing 
 	# Ticks * (1 / TicksPerQuarterNote) * MicroSecsPerQuarterNote * (1 / 1000)
@@ -101,6 +103,7 @@ _chunk_loop:
 	div.s $f1 $f1 $f3 # Microseconds / 1000                   -> Milliseconds
 	cvt.w.s $f1 $f1   # Convert from floating point to integer
 	mfc1 $s1 $f1 # Put the calculated delay in milliseconds into s1
+_end_calc:
 
 	# if (var_length != 0 && i != 0) means we need to exit the loop. 
 	#
@@ -125,8 +128,7 @@ _chunk_loop:
 	# execute_event returns some values into v0 that do different things. 
 	# If v1 == 0xFFFFFFFF, then that means the end of track meta event has been
 	# reached
-	li $t0 0xFFFFFFFF
-	beq $v1 $t0 _end_of_track
+	beq $v1 0xFFFFFFFF _end_of_track
 
 	j _chunk_loop
 
@@ -179,8 +181,7 @@ execute_event:
 	lbu $t0 0($s0)
 
 	# If the first byte of the track event is `FF`, then it is a meta event
-	li $t1 0xFF
-	beq $t0 $t1 meta_event 
+	beq $t0 0xFF meta_event 
 
 	# If the first bit is a 1, then it is a channel event
 	li $t1 0x00000080
