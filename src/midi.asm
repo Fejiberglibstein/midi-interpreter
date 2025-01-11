@@ -25,6 +25,10 @@
 	.align 2 
 	TracksCount: .word 0
 
+	## message to send when starting to execute the events in the file
+	.align 2 
+	LoadingMessage: .asciiz "\n\n\n\n\n\nLoading the midi file into memory, this may take awhile...\n"
+
 .text
 .globl parse_midi_file
 parse_midi_file:
@@ -63,6 +67,11 @@ parse_midi_file:
 	li $v0 30  # 30 is for getting the system time
 	syscall 
 	move $s0 $a0 # fsr this syscall puts the output into a0 instead of v0
+
+	# Print a nice message to say that this program is extremely slow lmao
+	la $a0 LoadingMessage
+	li $v0 4 # 4 is for printing strings
+	syscall
 
 	# Iterate over all the tracks
 	jal execute_tracks
