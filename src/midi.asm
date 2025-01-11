@@ -25,11 +25,6 @@
 	.align 2 
 	TracksCount: .word 0
 
-	## Used to calculate the time delay in milliseconds, read from the header
-	## chunk
-	.align 2
-	TicksPerQuarterNote: .word 0
-
 .text
 .globl parse_midi_file
 parse_midi_file:
@@ -138,7 +133,10 @@ validate_header:
 	la $a0 NoSmpte
 	bne $t1 $zero exit_with_error
 
-	sw $t0 TicksPerQuarterNote
+	# Convert the division into floating point
+	mtc1 $t0 $f0
+	cvt.s.w $f0 $f0 
+	s.s $f0 TicksPerQuarterNote
 
 	# Reset stack pointer
 	lw $s0 0($sp)

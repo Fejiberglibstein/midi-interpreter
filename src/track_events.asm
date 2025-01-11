@@ -40,11 +40,15 @@
 	
 	## Used to calculate the time delay in milliseconds, read from the header
 	## chunk
+	##
+	## This word will already be in floating point representation
 	.align 2
 	.globl TicksPerQuarterNote
 	TicksPerQuarterNote: .word 0
 	## Used to calculate the time delay in milliseconds, read from the meta
 	## event for tempo. (tempo is defined as micro seconds per quarter note)
+	##
+	## This word will already be in floating point representation
 	.align 2
 	.globl MicroSecsPerQuarterNote
 	MicroSecsPerQuarterNote: .word 0
@@ -76,10 +80,8 @@ execute_track_events:
 	move $s2 $a0 # s2 contains the address of the track we're currently reading
 	move $s3 $a1 # s3 contains the current time
 
-	l.s $f0 TicksPerQuarterNote
-	cvt.s.w $f0 $f0 # f0 is the Ticks / QuarterNote
-	l.s $f2 MicroSecsPerQuarterNote
-	cvt.s.w $f2 $f2 # f2 is the MicroSecs / QuarterNote
+	l.s $f0 TicksPerQuarterNote     # This will already be in FP representation
+	l.s $f2 MicroSecsPerQuarterNote # So will this
 	.data 
 	_1000: .float 1000
 	.text
@@ -99,6 +101,8 @@ _chunk_loop:
 	mul.s $f1 $f1 $f3 # Microseconds * 1000                   -> Milliseconds
 	cvt.w.s $f1 $f1   # Convert from floating point to integer
 	mfc1 $s1 $f1 # Put the calculated delay in milliseconds into s1
+
+	move $s1 $v0
 
 	# if (var_length != 0 && i != 0) means we need to exit the loop. 
 	#
@@ -197,9 +201,29 @@ meta_event:
 	addi $v0 $t0 3 # The total length of the track event is 3 + length we read
 
 	lbu $t0 1($s0)   # This is whatever meta event it is
-	li $t1 0x2F     # load with 2F (end of track meta event)
-	bne $t0 $t1 end # If not 2F, go to end
+	beq $t0 0x2F _meta_2F 
 
+	bne $t0 0x51 end
+	# If we have 51, this is the meta event to set the tempo
+
+	# Read the three byte tempo. We can't expect it to be word-aligned, so we
+	# can read all the individual bytes and or them together
+	lbu $t0 3($s0) # Load the first byte
+	sll $t0 $t0 16 # Shift the byte 2 bytes over
+	lbu $t1 4($s0) # Load the second byte
+	sll $t1 $t1 8  # Shift the byte 1 byte over
+	or $t0 $t0 $t1 # Or first two bytes together
+	lbu $t1 5($s0) # Load the third byte
+	or $t0 $t0 $t1
+
+	# Convert the tempo into floating point
+	mtc1 $t0 $f8    # move to fp register
+	cvt.s.w $f8 $f8 # Convert from integer to fp
+	s.s $f8 MicroSecsPerQuarterNote
+
+	j end
+
+_meta_2F:
 	# If we have 2F (end of track), we can set v1 accordingly 
 	li $v1 0xFFFFFFFF 
 	j end
