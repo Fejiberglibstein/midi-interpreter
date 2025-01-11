@@ -3,7 +3,7 @@
 	## to read from user input for file.
 	.globl FileName
 	.align 2
-	FileName: .asciiz "./examples/vent_music.mid"
+	FileName: .asciiz "./examples/mario.mid"
 
 .text
 .globl main
