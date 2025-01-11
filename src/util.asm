@@ -15,6 +15,12 @@ decode_var_len:
 	move $t1 $a0 # Position of the byte we're reading
 	li $v1 0     # i
 
+	# Early return out if the first byte is a 0
+	lbu $t0 0($t1)
+	bne $t0 $zero _loop
+	li $v1 1
+	jr $ra
+
 _loop:
 	sll $v0 $v0 7 # Shift the accumulated value by 7 bits
 
@@ -27,7 +33,6 @@ _loop:
 
 	andi $t2 $t0 0x80   # Get only the last bit of the byte
 	bne $t2 $zero _loop # repeat the loop if we have a 1 at the end
-
 
 	jr $ra
 
