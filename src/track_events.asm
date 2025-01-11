@@ -93,16 +93,16 @@ _chunk_loop:
 
 	# Convert ticks from reading the variable length into milliseconds.
 	# This can be done by doing 
-	# Ticks / TicksPerQuarterNote * MicroSecsPerQuarterNote * 1000
+	# Ticks * (1 / TicksPerQuarterNote) * MicroSecsPerQuarterNote * (1 / 1000)
 	mtc1 $v0 $f4      # Move variable length into to fp register
 	cvt.s.w $f4 $f4   # Convert from integer to floating point, f4 is `Ticks`
 	div.s $f1 $f4 $f0 # Ticks / TicksPerQuarterNote           -> QuarterNote
 	mul.s $f1 $f1 $f2 # QuarterNote * MicroSecsPerQuarterNote -> Microseconds
-	mul.s $f1 $f1 $f3 # Microseconds * 1000                   -> Milliseconds
+	div.s $f1 $f1 $f3 # Microseconds / 1000                   -> Milliseconds
 	cvt.w.s $f1 $f1   # Convert from floating point to integer
 	mfc1 $s1 $f1 # Put the calculated delay in milliseconds into s1
 
-	move $s1 $v0
+	# move $s1 $v0
 
 	# if (var_length != 0 && i != 0) means we need to exit the loop. 
 	#
