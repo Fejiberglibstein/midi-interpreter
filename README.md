@@ -13,6 +13,13 @@ These resources proved immensely useful in my implementation:
 - [mips green sheet](https://courses.cs.washington.edu/courses/cse378/09au/MIPS_Green_Sheet.pdf)
 - [an assortment of midi files to test with](https://bitmidi.com/)
 
+> [!WARNING]
+> The sound quality is _not good in the slightest_. I unfortunately can't do anything about this since I am limited to the midi player MIPS uses internally.
+>
+> There are many pops and crackles, and the instruments are poor quality. This is especially noticable in the videos below.
+>
+> Nonetheless, I think it sounds pretty good for the limitations it has.
+
 [^1]: Currently only format 1 files are supported, but in the future format 0 will also be supported.
 <details>
 <summary>Video Demos (turn on sound)</summary>
